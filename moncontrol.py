@@ -1,3 +1,4 @@
+import json
 import os
 import time
 
@@ -6,7 +7,7 @@ import click
 from logging_settings import set_logger
 from utilits import check_for_changes_in_cabel_conditions_until_it_change, check_file_exist_or_not_empty, \
     connect_monitors_automatically, create_string_for_execute, set_monitors_position_manually, \
-    get_monitors_data_from_xrandr, match_monitor_with_cabel, get_previous_monitor_position
+    get_monitors_data_from_xrandr, match_monitor_with_cabel, search_for_current_mon_pos_in_previously_saved, look_saved_monitors_position
 
 # TODO: попробовать запускать с помощью poetry
 # TODO: сохранять положения мониторов в файлик
@@ -27,10 +28,10 @@ def monitoring_activity():
             execute_command = 'xrandr --auto'
 
         else:
-            location_of_monitors = get_previous_monitor_position(monitors_data_from_xrandr, MONITORS_CONFIG_FILE_PATH)
+            location_of_monitors = search_for_current_mon_pos_in_previously_saved(monitors_data_from_xrandr, MONITORS_CONFIG_FILE_PATH)
             if not location_of_monitors:
                 location_of_monitors = connect_monitors_automatically(monitors_data_from_xrandr, MONITORS_CONFIG_FILE_PATH)
-                
+
             execute_command = create_string_for_execute(location_of_monitors)
             logger.debug('Позиционируем мониторы согласно сохраненным ранее настройкам')
             # TODO: добавить возможность сохранять несколько разных позиций мониторов. Проверять, соответствует ли ныняшняя позиция одной из присутствующих в конфиге. Находить ее
@@ -42,6 +43,28 @@ def monitoring_activity():
 
 def position_manually():
     my_monitors_position = set_monitors_position_manually()
+    # TODO: add monitors_positions_to_my_monitors_layout.json
+    found_monitors_pos = search_for_current_mon_pos_in_previously_saved(my_monitors_position, MONITORS_CONFIG_FILE_PATH)
+
+    with open(MONITORS_CONFIG_FILE_PATH, 'r') as file:
+        previously_saved_mons_pos = json.load(file)
+
+    if found_monitors_pos:
+        # TODO: здесь необходимо сделать проверку, содержит ли файл настройку, содержащую такие же мониторы (порядок не важен). Если содержит: заменить на новые настройки. Если не содержит, просто добавить еще одну
+        names_of_monitors_from_my_monitors_position = {[*mon_pos][0] for mon_pos in my_monitors_position}
+        config_that_consist_mon_pos_from_input = list(filter(lambda monitors_position: names_of_monitors_from_my_monitors_position == {[*monitor][0] for monitor in my_monitors_position}, previously_saved_mons_pos))
+        for elem in config_that_consist_mon_pos_from_input:
+            previously_saved_mons_pos.pop(previously_saved_mons_pos.index(elem))
+
+    for_dumping = [my_monitors_position, previously_saved_mons_pos]
+
+    with open(MONITORS_CONFIG_FILE_PATH, 'w') as file:
+        json.dump(for_dumping, file, indent=4)
+
+    logger.info('Settings was saved successfully')
+
+
+
     execute_command = create_string_for_execute(my_monitors_position)
     logger.info(execute_command)
     # os.system(execute_command)
@@ -53,18 +76,27 @@ def wrong_input(mode, settings):
                     f'\nЗапустите скрит с одной из следующих настроек:{line_break}{line_break}\n'
                     f'{f"{line_break}".join(settings)}')
 
+def show_saved_monitors_positions():
+    saved_positions = look_saved_monitors_position(MONITORS_CONFIG_FILE_PATH)
+    if not saved_positions:
+        logger.info('Config file empty or dont exist')
+
+    else:
+        logger.info(json.dumps(saved_positions, indent=4))
 
 @click.command()
-@click.option('--mode', default='monitoring-connectivity', help='set_monitors_positions_manually: script will run permanently and check cabels connection. When condition of any cabel will change, script will position monitors according to your previous settings.')
+@click.option('--mode', default='monitoring-connectivity', help='set-monitors-positions-manually: script will run permanently and check cabels connection. When condition of any cabel will change, script will position monitors according to your previous settings.')
 @click.option('--mode', help='monitoring-connectivity: in this mode u can position monitors (its position only in horizontal line now) much easier, comparing with xrandr')
 @click.option('--mode', help='match-monitor-with-cabel: this command will execute mode, that will help u understand, which monitor connected in specific port')
+@click.option('--mode', help='show-saved-positions: show you previously saved positions of monitors')
 def start_app(mode):
-    options = ['monitoring-connectivity', 'set_monitors_positions_manually', 'match-monitor-with-cabel']
+    options = ['monitoring-connectivity', 'set-monitors-positions-manually', 'match-monitor-with-cabel', 'show-saved-positions']
 
     start = {
-        'monitoring-connectivity': monitoring_activity,
-        'set-monitors-positions-manually': position_manually,
-        'match-monitor-with-cabel': match_monitor_with_cabel
+        options[0]: monitoring_activity,
+        options[1]: position_manually,
+        options[2]: match_monitor_with_cabel,
+        options[3]: show_saved_monitors_positions
     }
 
     if not start.get(mode):
@@ -74,12 +106,6 @@ def start_app(mode):
         start[mode]()
 
 
-# TODO: подумать над красивым консольным выводом логгирования
-# TODO: help приделать
-# TODO: определение, какой монитор является каким
-# TODO: приделать сохранение настроек в файл
-# TODO: приделать возможность вызова сохраненных настроек из файла
-# TODO: help должен вызываться
 
 if __name__ == '__main__':
     logger = set_logger()

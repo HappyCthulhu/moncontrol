@@ -66,12 +66,11 @@ def check_for_changes_in_cabel_conditions_until_it_change(cabels_conditions_file
     PATH_TO_CURRENT_DIRECTORY = p.absolute()
 
     while True:
-        time.sleep(2)
         if not check_file_exist_or_not_empty(f'{PATH_TO_CURRENT_DIRECTORY}/{cabels_conditions_file_path}'):
             logger.debug(f'Файл конфигов был пуст или не существовал: {new_cabels}')
 
             with open(cabels_conditions_file_path, 'w') as file:
-                json.dump(get_cabels_path_condition_from_card0(), file)
+                json.dump(get_cabels_path_condition_from_card0(), file, indent=4)
             return True
 
         # TODO: у меня не реализован вариант, при котором произошло одновременное отключение одних и подключение других портов
@@ -114,7 +113,7 @@ def check_for_changes_in_cabel_conditions_until_it_change(cabels_conditions_file
                     past_cabels_conditions[port_path] = current_cabel_status
 
                     with open(cabels_conditions_file_path, 'w') as file:
-                        json.dump(past_cabels_conditions, file)
+                        json.dump(past_cabels_conditions, file, indent=4)
 
                 # TODO: does this continue still needed?
                 continue
@@ -131,7 +130,7 @@ def check_for_changes_in_cabel_conditions_until_it_change(cabels_conditions_file
                     # logger.debug(logger.debug_connected_cables(current_cabels_conditions_from_card0))
 
                 with open('cabels_conditions_from_card0.json', 'w') as file:
-                    json.dump(current_cabels_conditions_from_card0, file)
+                    json.dump(current_cabels_conditions_from_card0, file, indent=4)
 
                 continue
 
@@ -269,7 +268,7 @@ def connect_monitors_automatically(data_from_xrandr, fp_to_config_file):
         monitors_auto_sort = [*monitor_with_lowest_size, *monitors_sorted_by_size]
 
         with open(fp_to_config_file, 'w') as file:
-            json.dump([monitors_auto_sort], file)
+            json.dump([monitors_auto_sort], file, indent=4)
 
         return monitors_auto_sort
 
@@ -303,7 +302,6 @@ def match_monitor_with_cabel():
 
     string_for_execute = f'xrandr --output {cabels_ids_names[cabel_id_from_input]} --brightness 0.5'
     os.system(string_for_execute)
-    time.sleep(3)
 
     string_for_execute = f'xrandr --output {cabels_ids_names[cabel_id_from_input]} --brightness 1'
     os.system(string_for_execute)
@@ -311,7 +309,7 @@ def match_monitor_with_cabel():
     logger.debug('Работа скрипта закончена')
 
 
-def get_previous_monitor_position(data_from_xrandr, fp):
+def search_for_current_mon_pos_in_previously_saved(data_from_xrandr, fp):
     # TODO: добавить возможность посмотреть и удалить сохраненные состояния
     with open(fp, 'r') as file:
         previous_monitor_position = json.load(file)
