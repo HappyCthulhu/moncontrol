@@ -26,18 +26,17 @@ def check_cabel_status(fp):
     # TODO: понять, какого черта пароль не кушает -S
     file_data = os.popen(f'cat {fp}', 'r').read()
 
-
     # TODO: ошибка, ведь я проверяю лишь наличие файла (а нужно проверять сам статус)
     # TODO: возвращать статус
 
     return file_data
+
 
 def check_file_exist_or_not_empty(fp):
     # TODO: в других местах
     # TODO: добавить execute-команду, ибо без sudo не запускается
     # TODO: понять, какого черта пароль не кушает -S
     file_data = os.popen(f'cat {fp}', 'r').read()
-
 
     # TODO: ошибка, ведь я проверяю лишь наличие файла (а нужно проверять сам статус)
     # TODO: возвращать статус
@@ -67,6 +66,7 @@ def check_for_changes_in_cabel_conditions_until_it_change(cabels_conditions_file
     PATH_TO_CURRENT_DIRECTORY = p.absolute()
 
     while True:
+        time.sleep(2)
         if not check_file_exist_or_not_empty(f'{PATH_TO_CURRENT_DIRECTORY}/{cabels_conditions_file_path}'):
             logger.debug(f'Файл конфигов был пуст или не существовал: {new_cabels}')
 
@@ -111,7 +111,7 @@ def check_for_changes_in_cabel_conditions_until_it_change(cabels_conditions_file
                 if current_cabel_status != port_past_condition:
                     removed_cabels.append(port_path.split("/")[-1])
                     # logger.debug(logger.debug_connected_cables(get_cabels_path_condition_from_card0()))
-                    # past_cabels_conditions.pop(port_path)
+                    past_cabels_conditions[port_path] = current_cabel_status
 
                     with open(cabels_conditions_file_path, 'w') as file:
                         json.dump(past_cabels_conditions, file)
@@ -134,7 +134,6 @@ def check_for_changes_in_cabel_conditions_until_it_change(cabels_conditions_file
                     json.dump(current_cabels_conditions_from_card0, file)
 
                 continue
-
 
             # TODO: new_cabels and removed_cabels to one changes_cabels dict
             if new_cabels:
@@ -179,16 +178,12 @@ def get_monitors_data_from_xrandr():
 
             monitors_data[-1] = f'{monitors_data[-1]}\n{string}'
 
-
     monitors_data = list(zip([monitor.split()[0] for monitor in monitors_data], monitors_data))
     physically_connected_monitors_data = {elem[0]: elem[1] for elem in monitors_data}
-
 
     test = []
 
     for port, data in physically_connected_monitors_data.items():
-
-
         resolutions = list(filter(lambda word: 'x' in word, ''.join(data.splitlines()[1:-1]).split()))
 
         monitor_size = data.splitlines()[0].split('y axis) ')[1]
@@ -231,8 +226,6 @@ def create_string_for_execute(monitors_data: list):
 
     cabels_names = [[*cabel][0] for id, cabel in enumerate(monitors_data)]
 
-
-
     # execute_command = [
     #     f'xrandr --output {cabels_names.pop(0)}']
     #
@@ -250,12 +243,9 @@ def create_string_for_execute(monitors_data: list):
             break
 
         execute_command.append(
-            f'xrandr --output {cabel_name} --left-of {cabels_names[id+1]} | ')
-
-
+            f'xrandr --output {cabel_name} --left-of {cabels_names[id + 1]} | ')
 
     execute_command = ' '.join(execute_command)
-
 
     execute_command = execute_command[0: -3]
 
@@ -270,12 +260,11 @@ def get_monitor_product(monitor_dimensions):
 
 # TODO: возможно, эта функция в принципе не нужна, ведь мониторы определять будем согласно конфигу?
 def connect_monitors_automatically(data_from_xrandr, fp_to_config_file):
-
     if len(data_from_xrandr) > 1:
         # TODO: сейчас сортирую по разрешению. Нужно по размеру сортировать, когда он прыгать не будет
-        monitors_sorted_by_size= sorted(data_from_xrandr, key=lambda monitor: get_monitor_product(
+        monitors_sorted_by_size = sorted(data_from_xrandr, key=lambda monitor: get_monitor_product(
             list(monitor.values())[0]['monitor_size']))
-        monitor_with_lowest_size= [monitors_sorted_by_size.pop(0)]
+        monitor_with_lowest_size = [monitors_sorted_by_size.pop(0)]
         monitors_sorted_by_size.reverse()
         monitors_auto_sort = [*monitor_with_lowest_size, *monitors_sorted_by_size]
 
@@ -288,13 +277,15 @@ def connect_monitors_automatically(data_from_xrandr, fp_to_config_file):
         os.system('xrandr --auto')
         return data_from_xrandr
 
+
 logger = set_logger()
+
+
 # TODO: дописать возможность изменения ориентации монитора на горизонтальную с последующим сохранением этого состояния
 
 
 def match_monitor_with_cabel():
     monitors_data_from_xrandr = get_monitors_data_from_xrandr()
-
 
     cabels_ids_names = {id: [*cabel][0] for id, cabel in enumerate(monitors_data_from_xrandr)}
 
@@ -307,7 +298,8 @@ def match_monitor_with_cabel():
     # TODO: проверить инпут на верность (мб там лишние значения есть например)
     cabel_id_from_input = int(input().strip())
 
-    logger.info('Сейчас на 3 секунды монитор, подключенный к выбранному вами кабелю поменяет яркость. Не прервайте работу скрипта!')
+    logger.info(
+        'Сейчас на 3 секунды монитор, подключенный к выбранному вами кабелю поменяет яркость. Не прервайте работу скрипта!')
 
     string_for_execute = f'xrandr --output {cabels_ids_names[cabel_id_from_input]} --brightness 0.5'
     os.system(string_for_execute)
@@ -316,8 +308,8 @@ def match_monitor_with_cabel():
     string_for_execute = f'xrandr --output {cabels_ids_names[cabel_id_from_input]} --brightness 1'
     os.system(string_for_execute)
 
-
     logger.debug('Работа скрипта закончена')
+
 
 def get_previous_monitor_position(data_from_xrandr, fp):
     # TODO: добавить возможность посмотреть и удалить сохраненные состояния
@@ -332,7 +324,19 @@ def get_previous_monitor_position(data_from_xrandr, fp):
         if monitors_names_from_settings == monitors_name_from_xrandr:
             return settings
 
-
-
     return None
 
+
+def look_saved_monitors_position(fp):
+    if not check_file_exist_or_not_empty(fp):
+        return None
+
+    with open(fp, 'r') as file:
+        saved_monitors_positions = json.load(file)
+
+    locations_of_monitors = []
+
+    for monitors_position in saved_monitors_positions:
+        locations_of_monitors.append([list(monitor)[0] for monitor in monitors_position])
+
+    return locations_of_monitors
