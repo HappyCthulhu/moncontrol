@@ -13,3 +13,14 @@ Description: in this mode u can position monitors (its position only in horizont
 Command:  
 ```python main.py match-monitor-with-cabel```  
 Description: this command will execute mode, that will help u understand, which monitor connected in specific port
+
+Command:  
+```python main.py show-saved-positions```  
+Description: show you previously saved positions of monitors
+
+**Setup:**
+- Clone this repo to your directory
+- Go to this repos directory
+- ```poetry install```
+- Add to config of yout shell variable:
+moncontrol="cd /home/valera/PycharmProjects/display_script/ | poetry run python moncontrol.py --mode"
