@@ -38,7 +38,7 @@ def wrong_input(mode, settings):
 
 
 @click.command()
-@click.option('--mode', default='monitoring-connectivity')
+@click.argument('mode', default='monitoring-connectivity')
 def start_app(mode):
     options = ['monitoring-connectivity', 'set_monitors_positions_manually']
 
@@ -56,6 +56,7 @@ def start_app(mode):
 
 
 # TODO: подумать над красивым консольным выводом логгирования
+# TODO: help приделать
 # TODO: определение, какой монитор является каким
 # TODO: приделать сохранение настроек в файл
 # TODO: приделать возможность вызова сохраненных настроек из файла
