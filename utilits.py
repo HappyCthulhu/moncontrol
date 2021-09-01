@@ -103,13 +103,6 @@ def check_for_changes_in_cabel_conditions_until_it_change(cabels_conditions_file
 
                 continue
 
-                # Проверяем, не изменилось ли состояние кабеля
-                # TODO: если я хочу, чтоб этот принт работал, нужно что-то придуматб
-                # if current_condition != past_cabels_conditions[port_path]:
-                #     logger.debug(f'Состояние порта {port_path} изменилось\n'
-                #                  f'Было: {past_cabels_conditions["port"]}\n'
-                #                  f'Стало: {current_condition}')
-                #     logger.debug(print_connected_cables(current_cabels_conditions_from_card0))
 
             if new_cabels:
                 logger.debug(f'Обнаружены новыe подключения: {new_cabels}')
@@ -124,29 +117,8 @@ def check_for_changes_in_cabel_conditions_until_it_change(cabels_conditions_file
 
 
 def get_monitors_data_from_xrandr():
-    # TODO: эта штука устанавливает crtc. Нужно исключительно для меня. В гите быть не должно
-    # TODO: крч я сдаюсь с ебаными разрешениями
-    # time.sleep(5)
-    #
-    # logger.debug('Настраиваю crtc ноута')
-    # os.system('xrandr -d :0 --output eDP1 --auto --crtc 0')
-    #
-    # time.sleep(5)
-    # logger.debug('Настраиваю crtc первого монитора')
-    # os.system('xrandr -d :0 --output DP2-1 --auto --crtc 1')
-    #
-    # time.sleep(5)
-    # logger.debug('Настраиваю crtc второго монитора')
-    # os.system('xrandr -d :0 --output DP2-2 --auto --crtc 2')
-    #
-    # time.sleep(5)
-    #
     monitors_short_data = subprocess.check_output(['xrandr', '--listmonitors']).decode()
     monitors = subprocess.check_output('xrandr').decode()
-    # monitors = monitors.split('VIRTUAL')[0]
-    print(monitors)
-    count_of_monitors = int(monitors_short_data.splitlines()[0].split(': ')[1])
-    list_of_connected_ports = [string.split()[-1].strip() for string in monitors_short_data.split('\n')[1:-1]]
 
     monitors_data = []
     for id, string in enumerate(monitors.splitlines()):
@@ -184,11 +156,8 @@ def get_monitors_data_from_xrandr():
 
 
         resolutions = list(filter(lambda word: 'x' in word, ''.join(data.splitlines()[1:-1]).split()))
-        print(data.splitlines()[0]+'\n')
         monitor_size = data.splitlines()[0].split('y axis) ')[1]
         monitor_size = [int(option.replace('mm', '')) for option in monitor_size.split('x')]
-        # test.append({port: {'resolutions': resolutions}})
-        # todo: размер монитора почему-то периодически пропадает
         test.append({port: {'resolutions': resolutions, 'monitor_size': monitor_size}})
 
     return test

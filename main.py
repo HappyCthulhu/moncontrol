@@ -38,9 +38,11 @@ def wrong_input(mode, settings):
 
 
 @click.command()
-@click.argument('mode', default='monitoring-connectivity')
+@click.option('--mode', default='monitoring-connectivity', help='set_monitors_positions_manually: script will run permanently and check cabels connection. When condition of any cabel will change, script will position monitors according to your previous settings.')
+@click.option('--mode', help='monitoring-connectivity: in this mode u can position monitors (its position only in horizontal line now) much easier, comparing with xrandr')
+@click.option('--mode', help='match-monitor-with-cabel: this command will execute mode, that will help u understand, which monitor connected in specific port')
 def start_app(mode):
-    options = ['monitoring-connectivity', 'set_monitors_positions_manually']
+    options = ['monitoring-connectivity', 'set_monitors_positions_manually', 'match-monitor-with-cabel']
 
     start = {
         'monitoring-connectivity': monitoring_activity,
