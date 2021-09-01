@@ -17,13 +17,30 @@ def print_connected_cables(cabels_conditions):
     logger.debug(f'Подключены следующие кабели: {connected_cabels}')
 
 
-# TODO: присылать сюда полный путь
+# TODO: не отлавливает отключение всего одного монитора
+
+# TODO: подавить следующее логгирование: cat: /sys/class/drm/card0/card0-DP-6/status: No such file or directory
+def check_cabel_status(fp):
+    # TODO: в других местах
+    # TODO: добавить execute-команду, ибо без sudo не запускается
+    # TODO: понять, какого черта пароль не кушает -S
+    file_data = os.popen(f'cat {fp}', 'r').read()
+
+
+    # TODO: ошибка, ведь я проверяю лишь наличие файла (а нужно проверять сам статус)
+    # TODO: возвращать статус
+
+    return file_data
+
 def check_file_exist_or_not_empty(fp):
     # TODO: в других местах
     # TODO: добавить execute-команду, ибо без sudo не запускается
     # TODO: понять, какого черта пароль не кушает -S
     file_data = os.popen(f'cat {fp}', 'r').read()
 
+
+    # TODO: ошибка, ведь я проверяю лишь наличие файла (а нужно проверять сам статус)
+    # TODO: возвращать статус
     if not file_data:
         return False
 
@@ -69,21 +86,37 @@ def check_for_changes_in_cabel_conditions_until_it_change(cabels_conditions_file
         ### TODO: если были подключены новые порты - принтим об этом инфу, дампим инфу в файлик и возвращаем True
 
         else:
-            time.sleep(1)
+
+            # при каком раскладе файл/папка порта может пропасть? Перестать существовать?
+
+            # новое подключение:
+            # статус изменен на connected
+            # файл появился (раньше его не было)
+
+            # новое отключение:
+            # файл не существует (хотя был до этого)
+            # статус был изменен на disconnected
+
             with open(cabels_conditions_file_path, 'r') as file:
                 past_cabels_conditions = json.load(file)
 
             # Проверяем, есть ли порты из предыдущего состояния в директориях:
+            # TODO: нужен ли этот clear?
+            # TODO: split to functions: check_for_disconnect and check_for_new_connections. Hypoteticly, maybe this could be one fucntion
             removed_cabels.clear()
-            for port_path in list(past_cabels_conditions):
-                if not check_file_exist_or_not_empty(f'{port_path}/status'):
+            # TODO: look, why this is key. we need value (cabel status)
+            # TODO: когда из файла предыдущих состояний достаем {}, он не идет сюда:
+            for port_path, port_past_condition in past_cabels_conditions.copy().items():
+                current_cabel_status = check_cabel_status(f'{port_path}/status').replace('\n', '')
+                if current_cabel_status != port_past_condition:
                     removed_cabels.append(port_path.split("/")[-1])
                     # logger.debug(logger.debug_connected_cables(get_cabels_path_condition_from_card0()))
-                    past_cabels_conditions.pop(port_path)
+                    # past_cabels_conditions.pop(port_path)
 
                     with open(cabels_conditions_file_path, 'w') as file:
                         json.dump(past_cabels_conditions, file)
 
+                # TODO: does this continue still needed?
                 continue
 
             current_cabels_conditions_from_card0 = get_cabels_path_condition_from_card0()
@@ -103,6 +136,7 @@ def check_for_changes_in_cabel_conditions_until_it_change(cabels_conditions_file
                 continue
 
 
+            # TODO: new_cabels and removed_cabels to one changes_cabels dict
             if new_cabels:
                 logger.debug(f'Обнаружены новыe подключения: {new_cabels}')
                 return True
@@ -116,7 +150,8 @@ def check_for_changes_in_cabel_conditions_until_it_change(cabels_conditions_file
 
 
 def get_monitors_data_from_xrandr():
-    monitors_short_data = subprocess.check_output(['xrandr', '--listmonitors']).decode()
+    # TODO: костыль для моего компа
+    time.sleep(3)
     monitors = subprocess.check_output('xrandr').decode()
 
     monitors_data = []
@@ -155,7 +190,9 @@ def get_monitors_data_from_xrandr():
 
 
         resolutions = list(filter(lambda word: 'x' in word, ''.join(data.splitlines()[1:-1]).split()))
+
         monitor_size = data.splitlines()[0].split('y axis) ')[1]
+
         monitor_size = [int(option.replace('mm', '')) for option in monitor_size.split('x')]
         test.append({port: {'resolutions': resolutions, 'monitor_size': monitor_size}})
 
@@ -243,7 +280,7 @@ def connect_monitors_automatically(data_from_xrandr, fp_to_config_file):
         monitors_auto_sort = [*monitor_with_lowest_size, *monitors_sorted_by_size]
 
         with open(fp_to_config_file, 'w') as file:
-            json.dump(monitors_auto_sort, file)
+            json.dump([monitors_auto_sort], file)
 
         return monitors_auto_sort
 
@@ -282,9 +319,20 @@ def match_monitor_with_cabel():
 
     logger.debug('Работа скрипта закончена')
 
-def get_previous_monitor_position(fp):
+def get_previous_monitor_position(data_from_xrandr, fp):
+    # TODO: добавить возможность посмотреть и удалить сохраненные состояния
     with open(fp, 'r') as file:
         previous_monitor_position = json.load(file)
 
-    return previous_monitor_position
+    monitors_name_from_xrandr = {[*cabel][0] for cabel in data_from_xrandr}
+
+    for settings in previous_monitor_position:
+        monitors_names_from_settings = {[*cabel][0] for cabel in settings}
+
+        if monitors_names_from_settings == monitors_name_from_xrandr:
+            return settings
+
+
+
+    return None
 

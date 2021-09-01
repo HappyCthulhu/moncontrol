@@ -11,6 +11,7 @@ from utilits import check_for_changes_in_cabel_conditions_until_it_change, check
 # TODO: попробовать запускать с помощью poetry
 # TODO: сохранять положения мониторов в файлик
 # TODO: create_string_for_execute переодически выдает пустую строку
+# TODO: сделать так, чтоб после мануальной настройки мониторов конфиги падали в json
 
 def monitoring_activity():
     while True:
@@ -26,8 +27,12 @@ def monitoring_activity():
             execute_command = 'xrandr --auto'
 
         else:
-            location_of_monitors = get_previous_monitor_position(MONITORS_CONFIG_FILE_PATH)
+            location_of_monitors = get_previous_monitor_position(monitors_data_from_xrandr, MONITORS_CONFIG_FILE_PATH)
+            if not location_of_monitors:
+                location_of_monitors = connect_monitors_automatically(monitors_data_from_xrandr, MONITORS_CONFIG_FILE_PATH)
+                
             execute_command = create_string_for_execute(location_of_monitors)
+            logger.debug('Позиционируем мониторы согласно сохраненным ранее настройкам')
             # TODO: добавить возможность сохранять несколько разных позиций мониторов. Проверять, соответствует ли ныняшняя позиция одной из присутствующих в конфиге. Находить ее
 
         logger.info(execute_command)
