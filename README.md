@@ -23,4 +23,4 @@ Description: show you previously saved positions of monitors
 - Go to this repos directory
 - ```poetry install```
 - Add to config of yout shell variable:
-moncontrol="cd /path_to_directory_that_consist_this_repo | poetry run python moncontrol.py"
+moncontrol="cd /path_to_directory_that_consist_this_repo && poetry run python moncontrol.py"
