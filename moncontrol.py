@@ -6,28 +6,33 @@ import click
 from logging_settings import set_logger
 from utilits import check_for_changes_in_cabel_conditions_until_it_change, check_file_exist_or_not_empty, \
     connect_monitors_automatically, create_string_for_execute, set_monitors_position_manually, \
-    get_monitors_data_from_xrandr, match_monitor_with_cabel, connect_monitors_according_to_previous_settings
+    get_monitors_data_from_xrandr, match_monitor_with_cabel, get_previous_monitor_position
 
 # TODO: попробовать запускать с помощью poetry
 # TODO: сохранять положения мониторов в файлик
-# TODO: не отлавливает изменения состояния портов
-
+# TODO: create_string_for_execute переодически выдает пустую строку
 
 def monitoring_activity():
     while True:
         check_for_changes_in_cabel_conditions_until_it_change(CABELS_CONDITIONS_FILE_PATH)
+        monitors_data_from_xrandr = get_monitors_data_from_xrandr()
 
         if not check_file_exist_or_not_empty(MONITORS_CONFIG_FILE_PATH):
 
-            monitors_data_from_xrandr = get_monitors_data_from_xrandr()
-            location_of_monitors = connect_monitors_automatically(monitors_data_from_xrandr)
-
+            location_of_monitors = connect_monitors_automatically(monitors_data_from_xrandr, MONITORS_CONFIG_FILE_PATH)
             execute_command = create_string_for_execute(location_of_monitors)
-            logger.info(execute_command)
-            # os.system(execute_command)
-        else:
-            connect_monitors_according_to_previous_settings(MONITORS_CONFIG_FILE_PATH)
 
+        elif len(monitors_data_from_xrandr) == 1:
+            execute_command = 'xrandr --auto'
+
+        else:
+            location_of_monitors = get_previous_monitor_position(MONITORS_CONFIG_FILE_PATH)
+            execute_command = create_string_for_execute(location_of_monitors)
+            # TODO: добавить возможность сохранять несколько разных позиций мониторов. Проверять, соответствует ли ныняшняя позиция одной из присутствующих в конфиге. Находить ее
+
+        logger.info(execute_command)
+
+        # os.system(execute_command)
 
 
 def position_manually():
@@ -78,3 +83,4 @@ if __name__ == '__main__':
     CABELS_CONDITIONS_FILE_PATH = 'cabels_conditions_from_card0.json'
 
     mode = start_app()
+

@@ -46,7 +46,6 @@ def check_for_changes_in_cabel_conditions_until_it_change(cabels_conditions_file
     new_cabels = []
     removed_cabels = []
 
-    PATH_TO_CARD0 = '/sys/class/drm/card0'
     p = Path('.')
     PATH_TO_CURRENT_DIRECTORY = p.absolute()
 
@@ -205,7 +204,7 @@ def create_string_for_execute(monitors_data: list):
     #     execute_command.append(
     #         f'--left-of {cabel_name}')
 
-    # TODO: обосанный xrandr не хочется принимать одним выражением строку с мониторами. Придется через | хуярить
+    # TODO: обосанный xrandr не хочет принимать одним выражением строку с мониторами. Придется через | хуярить
 
     execute_command = []
 
@@ -233,7 +232,7 @@ def get_monitor_product(monitor_dimensions):
 
 
 # TODO: возможно, эта функция в принципе не нужна, ведь мониторы определять будем согласно конфигу?
-def connect_monitors_automatically(data_from_xrandr):
+def connect_monitors_automatically(data_from_xrandr, fp_to_config_file):
 
     if len(data_from_xrandr) > 1:
         # TODO: сейчас сортирую по разрешению. Нужно по размеру сортировать, когда он прыгать не будет
@@ -241,10 +240,12 @@ def connect_monitors_automatically(data_from_xrandr):
             list(monitor.values())[0]['monitor_size']))
         monitor_with_lowest_size= [monitors_sorted_by_size.pop(0)]
         monitors_sorted_by_size.reverse()
-        monitors_my_sort = [*monitor_with_lowest_size, *monitors_sorted_by_size]
+        monitors_auto_sort = [*monitor_with_lowest_size, *monitors_sorted_by_size]
 
+        with open(fp_to_config_file, 'w') as file:
+            json.dump(monitors_auto_sort, file)
 
-        return monitors_my_sort
+        return monitors_auto_sort
 
     else:
         os.system('xrandr --auto')
@@ -280,3 +281,10 @@ def match_monitor_with_cabel():
 
 
     logger.debug('Работа скрипта закончена')
+
+def get_previous_monitor_position(fp):
+    with open(fp, 'r') as file:
+        previous_monitor_position = json.load(file)
+
+    return previous_monitor_position
+
