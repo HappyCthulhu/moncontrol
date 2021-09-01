@@ -52,11 +52,21 @@ def position_manually():
     if found_monitors_pos:
         # TODO: здесь необходимо сделать проверку, содержит ли файл настройку, содержащую такие же мониторы (порядок не важен). Если содержит: заменить на новые настройки. Если не содержит, просто добавить еще одну
         names_of_monitors_from_my_monitors_position = {[*mon_pos][0] for mon_pos in my_monitors_position}
-        config_that_consist_mon_pos_from_input = list(filter(lambda monitors_position: names_of_monitors_from_my_monitors_position == {[*monitor][0] for monitor in my_monitors_position}, previously_saved_mons_pos))
+
+        # TODO: это слишком сложный код
+        for monitors_position in previously_saved_mons_pos:
+            test = {[*monitor][0] for monitor in monitors_position}
+            if names_of_monitors_from_my_monitors_position == test:
+                print(True)
+            else:
+                print(False)
+
+        config_that_consist_mon_pos_from_input = list(filter(lambda monitors_position: names_of_monitors_from_my_monitors_position == {[*monitor][0] for monitor in monitors_position}, previously_saved_mons_pos))
         for elem in config_that_consist_mon_pos_from_input:
             previously_saved_mons_pos.pop(previously_saved_mons_pos.index(elem))
 
-    for_dumping = [my_monitors_position, previously_saved_mons_pos]
+    # TODO: добавляется внутри еще одного списка
+    for_dumping = [my_monitors_position, *previously_saved_mons_pos]
 
     with open(MONITORS_CONFIG_FILE_PATH, 'w') as file:
         json.dump(for_dumping, file, indent=4)
@@ -82,7 +92,13 @@ def show_saved_monitors_positions():
         logger.info('Config file empty or dont exist')
 
     else:
-        logger.info(json.dumps(saved_positions, indent=4))
+        saved_positions_with_position_id = [{id: monitors_position} for id, monitors_position in enumerate(saved_positions)]
+
+        logger.info('Next strings will show monitors_positions in format: {monitors_position_id: [cabel_1, cabel_2, etc]}')
+        time.sleep(0.1)
+        for monitor_id_position in saved_positions_with_position_id:
+            print(monitor_id_position)
+            # logger.info(json.dumps(saved_positions, indent=4))
 
 @click.command()
 @click.option('--mode', default='monitoring-connectivity', help='set-monitors-positions-manually: script will run permanently and check cabels connection. When condition of any cabel will change, script will position monitors according to your previous settings.')

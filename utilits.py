@@ -310,7 +310,7 @@ def match_monitor_with_cabel():
 
 
 def search_for_current_mon_pos_in_previously_saved(data_from_xrandr, fp):
-    # TODO: добавить возможность посмотреть и удалить сохраненные состояния
+    # TODO: добавить возможность удалить сохраненные состояния
     with open(fp, 'r') as file:
         previous_monitor_position = json.load(file)
 
@@ -329,12 +329,15 @@ def look_saved_monitors_position(fp):
     if not check_file_exist_or_not_empty(fp):
         return None
 
+    # TODO: при попытке мануального позиционрования, выдает ошибку, если файл конфигов пустой
     with open(fp, 'r') as file:
         saved_monitors_positions = json.load(file)
 
     locations_of_monitors = []
 
     for monitors_position in saved_monitors_positions:
-        locations_of_monitors.append([list(monitor)[0] for monitor in monitors_position])
+        locations_of_monitors.append([[*monitor][0] for monitor in monitors_position])
 
     return locations_of_monitors
+
+# TODO: практически все monitors and cabels нужно переименовать в ports
