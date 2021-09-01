@@ -6,7 +6,11 @@ import click
 from logging_settings import set_logger
 from utilits import check_for_changes_in_cabel_conditions_until_it_change, check_file_exist_or_not_empty, \
     connect_monitors_automatically, create_string_for_execute, set_monitors_position_manually, \
-    get_monitors_data_from_xrandr, match_monitor_with_cabel
+    get_monitors_data_from_xrandr, match_monitor_with_cabel, connect_monitors_according_to_previous_settings
+
+# TODO: попробовать запускать с помощью poetry
+# TODO: сохранять положения мониторов в файлик
+# TODO: не отлавливает изменения состояния портов
 
 
 def monitoring_activity():
@@ -16,11 +20,14 @@ def monitoring_activity():
         if not check_file_exist_or_not_empty(MONITORS_CONFIG_FILE_PATH):
 
             monitors_data_from_xrandr = get_monitors_data_from_xrandr()
-            connect_monitors_automatically(monitors_data_from_xrandr)
+            location_of_monitors = connect_monitors_automatically(monitors_data_from_xrandr)
 
-            execute_command = create_string_for_execute(monitors_data_from_xrandr)
+            execute_command = create_string_for_execute(location_of_monitors)
             logger.info(execute_command)
             # os.system(execute_command)
+        else:
+            connect_monitors_according_to_previous_settings(MONITORS_CONFIG_FILE_PATH)
+
 
 
 def position_manually():
