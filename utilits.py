@@ -341,3 +341,38 @@ def look_saved_monitors_position(fp):
     return locations_of_monitors
 
 # TODO: практически все monitors and cabels нужно переименовать в ports
+
+def delete_saved_config(fp):
+    with open(fp, 'r') as file:
+        previously_saved_mons_pos = json.load(file)
+
+    saved_cables_positions = []
+
+    for position in previously_saved_mons_pos:
+        cables_positions = []
+
+        for cable in position:
+            cables_positions.append([*cable][0])
+        saved_cables_positions.append(cables_positions)
+
+    saved_cable_position_with_id = {id: [*monitors_position] for id, monitors_position in
+                                    enumerate(saved_cables_positions)}
+
+    logger.info('Next strings will show monitors_positions in format: {config: [cabel_1, cabel_2, etc]}\n')
+    for id, monitors_names in saved_cable_position_with_id.items():
+        print(f'{id}: {monitors_names}')
+
+    logger.info('Write separate by commas ids of configs and script will delete them from saved configs')
+    input_ids = [int(id) for id in input().strip().split(', ')]
+
+    for id in input_ids:
+        cables_for_delete_from_input = saved_cable_position_with_id[id]
+        configs_for_dump = list(
+            filter(lambda config: cables_for_delete_from_input != [[*monitor][0] for monitor in config],
+                   previously_saved_mons_pos))
+
+    with open(fp, 'w') as file:
+        json.dump(configs_for_dump, file)
+
+    logger.info(f'This configs was deleted successfully: {input_ids}')
+
