@@ -1,7 +1,6 @@
+import argparse
 import json
 import time
-
-import click
 
 from logging_settings import set_logger
 from utilits import check_for_changes_in_cabel_conditions_until_it_change, check_file_exist_or_not_empty, \
@@ -9,11 +8,6 @@ from utilits import check_for_changes_in_cabel_conditions_until_it_change, check
     get_monitors_data_from_xrandr, match_monitor_with_cabel, search_for_current_mon_pos_in_previously_saved, \
     look_saved_monitors_position, delete_saved_config
 
-
-# TODO: попробовать запускать с помощью poetry
-# TODO: сохранять положения мониторов в файлик
-# TODO: create_string_for_execute переодически выдает пустую строку
-# TODO: сделать так, чтоб после мануальной настройки мониторов конфиги падали в json
 
 def monitoring_activity():
     while True:
@@ -129,23 +123,26 @@ def show_saved_monitors_positions():
         time.sleep(0.1)
         for monitor_id_position in saved_positions_with_position_id:
             print(monitor_id_position)
-            # logger.info(json.dumps(saved_positions, indent=4))
+
 
 def delete_config():
+    # TODO: проверить, как ведет себя этот конфиг при попытке удалить несколько мониторов за раз
     delete_saved_config(MONITORS_CONFIG_FILE_PATH)
 
-@click.command()
-@click.option('--mode', default='monitoring-connectivity',
-              help='set-monitors-positions-manually: script will run permanently and check cabels connection. When condition of any cabel will change, script will position monitors according to your previous settings.')
-@click.option('--mode',
-              help='monitoring-connectivity: in this mode u can position monitors (its position only in horizontal line now) much easier, comparing with xrandr')
-@click.option('--mode',
-              help='match-monitor-with-cabel: this command will execute mode, that will help u understand, which monitor connected in specific port')
-@click.option('--mode', help='show-saved-positions: show you previously saved positions of monitors')
-@click.option('--mode', help='delete-saved-config: u can choose configs, what you want delete')
+
+def make_parser():
+    parser = argparse.ArgumentParser(description="My Best Script")
+    parser.add_argument("-m", "--monitoring-connectivity", default=False, action="store_true")
+    parser.add_argument("-s", "--set-monitors-positions-manually", default=False, action="store_true")
+    parser.add_argument("-c", "--match-monitor-with-cable", default=False, action="store_true")
+    parser.add_argument("-p", "--show-saved-positions", default=False, action="store_true")
+    parser.add_argument("-d", "--delete-saved-config", default=False, action="store_true")
+    return parser
+
+
 def start_app(mode):
-    options = ['monitoring-connectivity', 'set-monitors-positions-manually', 'match-monitor-with-cabel',
-               'show-saved-positions', 'delete-saved-config']
+    options = ['monitoring_connectivity', 'set_monitors_positions_manually', 'match_monitor_with_cable',
+               'show_saved_positions', 'delete_saved_config']
     start = {
         options[0]: monitoring_activity,
         options[1]: position_manually,
@@ -154,17 +151,18 @@ def start_app(mode):
         options[4]: delete_config
     }
 
-    if not start.get(mode):
-        wrong_input(mode, options)
-
-    else:
-        start[mode]()
+    start[mode]()
 
 
 if __name__ == '__main__':
     logger = set_logger()
 
     MONITORS_CONFIG_FILE_PATH = 'my_monitor_layout.json'
-    CABLES_CONDITIONS_FILE_PATH = 'cabels_conditions_from_card0.json'
+    CABLES_CONDITIONS_FILE_PATH = 'cables_conditions_from_card0.json'
 
-    mode = start_app()
+    args = make_parser().parse_args()
+    my_gorgeous_dic = vars(args)
+    mode = list(filter(lambda item: item[1], my_gorgeous_dic.items()))[0][0]
+
+
+    start_app(mode)
