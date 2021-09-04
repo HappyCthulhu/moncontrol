@@ -127,16 +127,17 @@ def show_saved_monitors_positions():
 
 def delete_config():
     # TODO: проверить, как ведет себя этот конфиг при попытке удалить несколько мониторов за раз
+    # TODO: понять, каким образом xrandr работает с мониторами и не сделать собственное управление без использования xrandr
     delete_saved_config(MONITORS_CONFIG_FILE_PATH)
 
 
 def make_parser():
     parser = argparse.ArgumentParser(description="My Best Script")
-    parser.add_argument("-m", "--monitoring-connectivity", default=False, action="store_true")
-    parser.add_argument("-s", "--set-monitors-positions-manually", default=False, action="store_true")
-    parser.add_argument("-c", "--match-monitor-with-cable", default=False, action="store_true")
-    parser.add_argument("-p", "--show-saved-positions", default=False, action="store_true")
-    parser.add_argument("-d", "--delete-saved-config", default=False, action="store_true")
+    parser.add_argument("-m", "--monitoring-connectivity", default=False, action="store_true", help='script will running permanently and check cabels connection. When condition of any cabel change, script will position monitors according to your previous settings.')
+    parser.add_argument("-s", "--set-monitors-positions-manually", default=False, action="store_true", help='in this mode u can position monitors (its position only in horizontal line now) much easier, comparing with xrandr')
+    parser.add_argument("-c", "--match-monitor-with-cable", default=False, action="store_true", help='this command will execute mode, that will help u understand, which monitor connected in specific port')
+    parser.add_argument("-p", "--show-saved-positions", default=False, action="store_true", help='show you all previously saved positions of monitors')
+    parser.add_argument("-d", "--delete-saved-config", default=False, action="store_true", help='delete certain previously saved configs')
     return parser
 
 
@@ -153,6 +154,7 @@ def start_app(mode):
 
     start[mode]()
 
+# TODO: переделать в dynaconf, если есть настройки
 
 if __name__ == '__main__':
     logger = set_logger()
