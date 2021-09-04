@@ -4,8 +4,6 @@
 Commands:  
 usage: moncontrol.py [-h] [-m] [-s] [-c] [-p] [-d]
 
-My Best Script
-
 optional arguments:
   ```-h, --help```            show this help message and exit
   ```-m, --monitoring-connectivity```
