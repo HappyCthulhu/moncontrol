@@ -18,8 +18,11 @@ optional arguments:
                         delete certain previously saved configs  
  
 **Setup:**
-- Clone this repo to your directory
-- Go to this repos directory
+- install poetry (this is modern pip`s analog): https://python-poetry.org/docs/
+- clone this repo to your directory
+- go to this repos directory
 - ```poetry install```
 - Add to config of your shell variable:
 moncontrol="cd /path_to_directory_that_consist_this_repo && poetry run python moncontrol.py"
+
+If u want moncontrol works permanently, u can add moncontrol -m to your systemctl
