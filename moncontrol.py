@@ -2,34 +2,44 @@ import argparse
 import json
 import time
 
+from actions import Actions
+from data import Data
 from logging_settings import set_logger
-from utilits import check_for_changes_in_cabel_conditions_until_it_change, check_file_exist_or_not_empty, \
-    connect_monitors_automatically, create_string_for_execute, set_monitors_position_manually, \
-    get_monitors_data_from_xrandr, match_monitor_with_cabel, search_for_current_mon_pos_in_previously_saved, \
-    look_saved_monitors_position, delete_saved_config
+
+
+# TODO: где это используется?
+# TODO: заменить тыканье в shell на более профессиональные инструменты
+# TODO: оставшиеся TODO перевести на англ
+# TODO: не отлавливает отключение всего одного монитора. Вроде фиксил, проверить
+# TODO: наполнить текст комментариями
+# TODO: у меня не реализован вариант, при котором произошло одновременное отключение одних и подключение других портов
+# TODO: autorandr каким-то маническим образом позиционирует мои мониторы... Как?!
+# TODO: возможно, эта функция в принципе не нужна, ведь мониторы определять будем согласно конфигу?
+# TODO: дописать возможность изменения ориентации монитора на горизонтальную с последующим сохранением этого состояния
 
 
 def monitoring_activity():
     while True:
-        check_for_changes_in_cabel_conditions_until_it_change(CABLES_CONDITIONS_FILE_PATH)
-        monitors_data_from_xrandr = get_monitors_data_from_xrandr()
+        Data.check_for_changes_in_cable_conditions_until_it_change(CABLES_CONDITIONS_FILE_PATH)
+        monitors_data_from_xrandr = Data.get_monitors_data_from_xrandr()
 
-        if not check_file_exist_or_not_empty(MONITORS_CONFIG_FILE_PATH):
+        if not Data.check_file_exist_or_not_empty(MONITORS_CONFIG_FILE_PATH):
 
-            location_of_monitors = connect_monitors_automatically(monitors_data_from_xrandr, MONITORS_CONFIG_FILE_PATH)
-            execute_command = create_string_for_execute(location_of_monitors)
+            location_of_monitors = Actions.connect_monitors_automatically(monitors_data_from_xrandr,
+                                                                          MONITORS_CONFIG_FILE_PATH)
+            execute_command = Actions.create_string_for_execute(location_of_monitors)
 
         elif len(monitors_data_from_xrandr) == 1:
             execute_command = 'xrandr --auto'
 
         else:
-            location_of_monitors = search_for_current_mon_pos_in_previously_saved(monitors_data_from_xrandr,
-                                                                                  MONITORS_CONFIG_FILE_PATH)
+            location_of_monitors = Data.search_for_current_mon_pos_in_previously_saved(monitors_data_from_xrandr,
+                                                                                       MONITORS_CONFIG_FILE_PATH)
             if not location_of_monitors:
-                location_of_monitors = connect_monitors_automatically(monitors_data_from_xrandr,
-                                                                      MONITORS_CONFIG_FILE_PATH)
+                location_of_monitors = Actions.connect_monitors_automatically(monitors_data_from_xrandr,
+                                                                              MONITORS_CONFIG_FILE_PATH)
 
-            execute_command = create_string_for_execute(location_of_monitors)
+            execute_command = Actions.create_string_for_execute(location_of_monitors)
             logger.debug('Позиционируем мониторы согласно сохраненным ранее настройкам')
             # TODO: добавить возможность сохранять несколько разных позиций мониторов. Проверять, соответствует ли ныняшняя позиция одной из присутствующих в конфиге. Находить ее
 
@@ -39,9 +49,10 @@ def monitoring_activity():
 
 
 def position_manually():
-    my_monitors_position = set_monitors_position_manually()
+    my_monitors_position = Actions.set_monitors_position_manually()
     # TODO: add monitors_positions_to_my_monitors_layout.json
-    found_monitors_pos = search_for_current_mon_pos_in_previously_saved(my_monitors_position, MONITORS_CONFIG_FILE_PATH)
+    found_monitors_pos = Data.search_for_current_mon_pos_in_previously_saved(my_monitors_position,
+                                                                             MONITORS_CONFIG_FILE_PATH)
 
     with open(MONITORS_CONFIG_FILE_PATH, 'r') as file:
         previously_saved_mons_pos = json.load(file)
@@ -67,41 +78,6 @@ def position_manually():
     logger.info('Settings was saved successfully')
 
 
-# def delete_saved_config():
-#     with open(MONITORS_CONFIG_FILE_PATH, 'r') as file:
-#         previously_saved_mons_pos = json.load(file)
-#
-#     saved_cables_positions = []
-#
-#     for position in previously_saved_mons_pos:
-#         cables_positions = []
-#
-#         for cable in position:
-#             cables_positions.append([*cable][0])
-#         saved_cables_positions.append(cables_positions)
-#
-#     saved_cable_position_with_id = {id: [*monitors_position] for id, monitors_position in
-#                                     enumerate(saved_cables_positions)}
-#
-#     logger.info('Next strings will show monitors_positions in format: {config: [cabel_1, cabel_2, etc]}\n')
-#     for id, monitors_names in saved_cable_position_with_id.items():
-#         print(f'{id}: {monitors_names}')
-#
-#     logger.info('Write separate by commas ids of configs and script will delete them from saved configs')
-#     input_ids = [int(id) for id in input().strip().split(', ')]
-#
-#     for id in input_ids:
-#         cables_for_delete_from_input = saved_cable_position_with_id[id]
-#         configs_for_dump = list(
-#             filter(lambda config: cables_for_delete_from_input != [[*monitor][0] for monitor in config],
-#                    previously_saved_mons_pos))
-#
-#     with open(MONITORS_CONFIG_FILE_PATH, 'w') as file:
-#         json.dump(configs_for_dump, file)
-#
-#     logger.info(f'This configs was deleted successfully: {input_ids}')
-
-
 def wrong_input(mode, settings):
     line_break = '\n'
     logger.critical(f'\nСкрипт не имеет настройки: {mode}\n\n'
@@ -110,7 +86,7 @@ def wrong_input(mode, settings):
 
 
 def show_saved_monitors_positions():
-    saved_positions = look_saved_monitors_position(MONITORS_CONFIG_FILE_PATH)
+    saved_positions = Data.look_saved_monitors_position(MONITORS_CONFIG_FILE_PATH)
     if not saved_positions:
         logger.info('Config file empty or dont exist')
 
@@ -122,22 +98,30 @@ def show_saved_monitors_positions():
             'Next strings will show monitors_positions in format: {monitors_position_id: [cabel_1, cabel_2, etc]}')
         time.sleep(0.1)
         for monitor_id_position in saved_positions_with_position_id:
+            print('\n')
             print(monitor_id_position)
+
+        print('\n')
 
 
 def delete_config():
     # TODO: проверить, как ведет себя этот конфиг при попытке удалить несколько мониторов за раз
     # TODO: понять, каким образом xrandr работает с мониторами и не сделать собственное управление без использования xrandr
-    delete_saved_config(MONITORS_CONFIG_FILE_PATH)
+    Actions.delete_saved_config(MONITORS_CONFIG_FILE_PATH)
 
 
 def make_parser():
-    parser = argparse.ArgumentParser(description="My Best Script")
-    parser.add_argument("-m", "--monitoring-connectivity", default=False, action="store_true", help='script will running permanently and check cabels connection. When condition of any cabel change, script will position monitors according to your previous settings.')
-    parser.add_argument("-s", "--set-monitors-positions-manually", default=False, action="store_true", help='in this mode u can position monitors (its position only in horizontal line now) much easier, comparing with xrandr')
-    parser.add_argument("-c", "--match-monitor-with-cable", default=False, action="store_true", help='this command will execute mode, that will help u understand, which monitor connected in specific port')
-    parser.add_argument("-p", "--show-saved-positions", default=False, action="store_true", help='show you all previously saved positions of monitors')
-    parser.add_argument("-d", "--delete-saved-config", default=False, action="store_true", help='delete certain previously saved configs')
+    parser = argparse.ArgumentParser(description="Arguments:")
+    parser.add_argument("-m", "--monitoring-connectivity", default=False, action="store_true",
+                        help='script will running permanently and check cabels connection. When condition of any cabel change, script will position monitors according to your previous settings.')
+    parser.add_argument("-s", "--set-monitors-positions-manually", default=False, action="store_true",
+                        help='in this mode u can position monitors (its position only in horizontal line now) much easier, comparing with xrandr')
+    parser.add_argument("-c", "--match-monitor-with-cable", default=False, action="store_true",
+                        help='this command will execute mode, that will help u understand, which monitor connected in specific port')
+    parser.add_argument("-p", "--show-saved-positions", default=False, action="store_true",
+                        help='show you all previously saved positions of monitors')
+    parser.add_argument("-d", "--delete-saved-config", default=False, action="store_true",
+                        help='delete certain previously saved configs')
     return parser
 
 
@@ -147,12 +131,13 @@ def start_app(mode):
     start = {
         options[0]: monitoring_activity,
         options[1]: position_manually,
-        options[2]: match_monitor_with_cabel,
+        options[2]: Actions.match_monitor_with_cable,
         options[3]: show_saved_monitors_positions,
         options[4]: delete_config
     }
 
     start[mode]()
+
 
 # TODO: переделать в dynaconf, если есть настройки
 
@@ -165,6 +150,5 @@ if __name__ == '__main__':
     args = make_parser().parse_args()
     my_gorgeous_dic = vars(args)
     mode = list(filter(lambda item: item[1], my_gorgeous_dic.items()))[0][0]
-
 
     start_app(mode)
