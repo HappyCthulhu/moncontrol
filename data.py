@@ -9,41 +9,23 @@ from logging_settings import set_logger
 
 class Data:
 
-    # TODO: подавить следующее логгирование: cat: /sys/class/drm/card0/card0-DP-6/status: No such file or directory
-    # TODO: почемy я использовал popen? Неужели при with open будет выдавать access denied?
     @staticmethod
-    def check_cabel_status(fp):
-        # TODO: в других местах
-        # TODO: добавить execute-команду, ибо без sudo не запускается
-        # TODO: понять, какого черта пароль не кушает -S
-        file_data = os.popen(f'cat {fp}', 'r').read()
+    def check_cable_status(fp):
+        if Path(fp).is_file():
+            with open(fp, 'r') as file:
+                status = file.read().replace('\n', '')
+                return status
 
-        # TODO: ошибка, ведь я проверяю лишь наличие файла (а нужно проверять сам статус)
-        ## TODO: так мб сначала наличие файла проверять? Или это тоже не варик? Если не варик, то почему?
-        # TODO: возвращать статус
-
-        return file_data
-
-    @staticmethod
-    def check_file_exist_or_not_empty(fp):
-        # TODO: в других местах
-        # TODO: добавить execute-команду, ибо без sudo не запускается
-        # TODO: понять, какого черта пароль не кушает -S
-        file_data = os.popen(f'cat {fp}', 'r').read()
-
-        # TODO: ошибка, ведь я проверяю лишь наличие файла (а нужно проверять сам статус)
-        # TODO: возвращать статус
-        if not file_data:
-            return False
-
-        return True
+        else:
+            return 'disconnected'
 
     @staticmethod
     def get_cables_path_condition_from_card0():
-        dirs = os.listdir(os.environ['CABELS_DIR'])
+        dirs = os.listdir(os.environ['CABLES_DIR'])
         cables_dirs = list(filter(lambda path: 'HDMI' in path or 'DP' in path, dirs))
-        cables_path = [f'{os.environ["CABELS_DIR"]}{dir}' for dir in cables_dirs]
+        cables_path = [f'{os.environ["CABLES_DIR"]}{dir}' for dir in cables_dirs]
         cables_path_condition = {}
+
         for cable_path in cables_path:
             with open(f'{cable_path}/status', 'r', encoding='utf-8') as file:
                 cables_path_condition[cable_path] = file.read().replace('\n', '')
@@ -56,13 +38,13 @@ class Data:
 
         # проходимся по списку из старых кабелей, отдельно получаем текущую информацию для кабеля, сравниваем
         for port_path, port_past_condition in past_cables_conditions.copy().items():
-            current_cabel_status = Data.check_cabel_status(f'{port_path}/status').replace('\n', '')
+            current_cable_status = Data.check_cable_status(f'{port_path}/status').replace('\n', '')
 
-            if current_cabel_status != port_past_condition:
+            if current_cable_status != port_past_condition:
                 removed_cables.append(port_path.split("/")[-1])
-                past_cables_conditions[port_path] = current_cabel_status
+                past_cables_conditions[port_path] = current_cable_status
 
-                # TODO: возможно стоит вынести это из функции. Просто возвращать не только removed_cabels, но
+                # TODO: возможно стоит вынести это из функции. Просто возвращать не только removed_cables, но
                 with open(cables_conditions_file_path, 'w') as file:
                     json.dump(past_cables_conditions, file, indent=4)
 
@@ -93,7 +75,8 @@ class Data:
         PATH_TO_CURRENT_DIRECTORY = p.absolute()
 
         while True:
-            if not Data.check_file_exist_or_not_empty(f'{PATH_TO_CURRENT_DIRECTORY}/{cabels_conditions_file_path}'):
+            path_for_check = Path(f'{PATH_TO_CURRENT_DIRECTORY}/{cabels_conditions_file_path}')
+            if not path_for_check.is_file() or path_for_check.stat().st_size == 0:
                 logger.debug(f'Файл конфигов был пуст или не существовал')
 
                 with open(cabels_conditions_file_path, 'w') as file:
@@ -173,7 +156,7 @@ class Data:
 
     @staticmethod
     def look_saved_monitors_position(fp):
-        if not Data.check_file_exist_or_not_empty(fp):
+        if not Path(fp).is_file() or Path(fp).stat().st_size == 0:
             return None
 
         # TODO: при попытке мануального позиционрования, выдает ошибку, если файл конфигов пустой
@@ -201,5 +184,6 @@ class Data:
                 return settings
 
         return None
+
 
 logger = set_logger()

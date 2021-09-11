@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 from data import Data
 from logging_settings import set_logger
@@ -38,8 +39,10 @@ class Actions:
 
         cables_names = [[*cable][0] for id, cable in enumerate(monitors_data)]
 
-        # TODO: обосанный xrandr не хочет принимать одним выражением строку с мониторами. Придется через | хуярить
-
+        """ 
+        sometimes, on some devices, xrandr works better, if u will enter commands sequentially.
+        so, its better to write command, each parts of which divided be |
+        """
         execute_command = []
 
         for id, cable_name in enumerate(cables_names):
@@ -81,6 +84,8 @@ class Actions:
 
         string_for_execute = f'xrandr --output {cables_ids_names[cable_id_from_input]} --brightness 0.5'
         os.system(string_for_execute)
+
+        time.sleep(3)
 
         string_for_execute = f'xrandr --output {cables_ids_names[cable_id_from_input]} --brightness 1'
         os.system(string_for_execute)
@@ -126,7 +131,6 @@ class Actions:
     @staticmethod
     def connect_monitors_automatically(data_from_xrandr, fp_to_config_file):
         if len(data_from_xrandr) > 1:
-            # TODO: сейчас сортирую по разрешению. Нужно по размеру сортировать, когда он прыгать не будет
             monitors_sorted_by_size = sorted(data_from_xrandr, key=lambda monitor: Actions.get_monitor_dimensions(
                 list(monitor.values())[0]['monitor_size']))
             monitor_with_lowest_size = [monitors_sorted_by_size.pop(0)]

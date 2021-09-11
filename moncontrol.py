@@ -1,13 +1,14 @@
 import argparse
 import json
+import os
 import time
+from pathlib import Path
 
 from actions import Actions
 from data import Data
 from logging_settings import set_logger
 
 
-# TODO: где это используется?
 # TODO: заменить тыканье в shell на более профессиональные инструменты
 # TODO: оставшиеся TODO перевести на англ
 # TODO: не отлавливает отключение всего одного монитора. Вроде фиксил, проверить
@@ -17,14 +18,25 @@ from logging_settings import set_logger
 # TODO: возможно, эта функция в принципе не нужна, ведь мониторы определять будем согласно конфигу?
 # TODO: дописать возможность изменения ориентации монитора на горизонтальную с последующим сохранением этого состояния
 
+def get_and_write_virtual_env():
+    logger.info('Please install direnv!')
+
+    with open('.envrc', 'w') as file:
+        file.write('export CABLES_DIR=/sys/class/drm/card0/')
+
+    with open('.env', 'w') as file:
+        file.write('CABLES_DIR=/sys/class/drm/card0/')
+
+    os.environ['CABLES_DIR'] = '/sys/class/drm/card0/'
+
+
 
 def monitoring_activity():
     while True:
         Data.check_for_changes_in_cable_conditions_until_it_change(CABLES_CONDITIONS_FILE_PATH)
         monitors_data_from_xrandr = Data.get_monitors_data_from_xrandr()
 
-        if not Data.check_file_exist_or_not_empty(MONITORS_CONFIG_FILE_PATH):
-
+        if not Path(MONITORS_CONFIG_FILE_PATH).is_file() or Path(MONITORS_CONFIG_FILE_PATH).stat().st_size == 0:
             location_of_monitors = Actions.connect_monitors_automatically(monitors_data_from_xrandr,
                                                                           MONITORS_CONFIG_FILE_PATH)
             execute_command = Actions.create_string_for_execute(location_of_monitors)
@@ -139,10 +151,12 @@ def start_app(mode):
     start[mode]()
 
 
-# TODO: переделать в dynaconf, если есть настройки
 
 if __name__ == '__main__':
     logger = set_logger()
+
+    if not os.environ.get('CABLES_DIR'):
+        get_and_write_virtual_env()
 
     MONITORS_CONFIG_FILE_PATH = 'my_monitor_layout.json'
     CABLES_CONDITIONS_FILE_PATH = 'cables_conditions_from_card0.json'
