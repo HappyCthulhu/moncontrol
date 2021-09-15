@@ -5,6 +5,7 @@ import time
 from data import Data
 from logging_settings import set_logger
 
+
 class Actions:
 
     @staticmethod
@@ -25,19 +26,13 @@ class Actions:
 
         for monitor_id in order_of_monitor_ids_from_input:
             cable_name = cables_ids_names[monitor_id]
-            monitor_data = list(filter(lambda elem: [*elem][0] == cable_name, monitors_data_from_xrandr))[0]
-            ordered_monitors.append(monitor_data)
+            ordered_monitors.append(cable_name)
 
         return ordered_monitors
 
     @staticmethod
     def create_string_for_execute(monitors_data: list):
-        reformat_to_dict = {}
 
-        for monitor in monitors_data:
-            reformat_to_dict = {**reformat_to_dict, **monitor}
-
-        cables_names = [[*cable][0] for id, cable in enumerate(monitors_data)]
 
         """ 
         sometimes, on some devices, xrandr works better, if u will enter commands sequentially.
@@ -45,12 +40,12 @@ class Actions:
         """
         execute_command = []
 
-        for id, cable_name in enumerate(cables_names):
-            if len(cables_names) == id + 1:
+        for id, cable_name in enumerate(monitors_data):
+            if len(monitors_data) == id + 1:
                 break
 
             execute_command.append(
-                f'xrandr --output {cable_name} --left-of {cables_names[id + 1]} | ')
+                f'xrandr --output {cable_name} --left-of {monitors_data[id + 1]} | ')
 
         execute_command = ' '.join(execute_command)
 
@@ -58,11 +53,9 @@ class Actions:
 
         return execute_command
 
-
     @staticmethod
     def get_monitor_dimensions(monitor_dimensions):
         return monitor_dimensions[0] * monitor_dimensions[1]
-
 
     @staticmethod
     def match_monitor_with_cable():
@@ -93,18 +86,7 @@ class Actions:
         logger.debug('Работа скрипта закончена')
 
     @staticmethod
-    def delete_saved_config(fp):
-        with open(fp, 'r') as file:
-            previously_saved_mons_pos = json.load(file)
-
-        saved_cables_positions = []
-
-        for position in previously_saved_mons_pos:
-            cables_positions = []
-
-            for cable in position:
-                cables_positions.append([*cable][0])
-            saved_cables_positions.append(cables_positions)
+    def delete_saved_config(saved_cables_positions):
 
         saved_cable_position_with_id = {id: [*monitors_position] for id, monitors_position in
                                         enumerate(saved_cables_positions)}
@@ -114,19 +96,19 @@ class Actions:
             print(f'\n{id}: {monitors_names}')
 
         logger.info('Write separate by commas ids of configs and script will delete them from saved configs')
-        input_ids = [int(id) for id in input().strip().split(', ')]
 
-        for id in input_ids:
-            cables_for_delete_from_input = saved_cable_position_with_id[id]
-            configs_for_dump = list(
-                filter(lambda config: cables_for_delete_from_input != [[*monitor][0] for monitor in config],
-                       previously_saved_mons_pos))
+        # filter is needed in case of string: "1, 2, "
+        input_ids = [int(id) for id in list(filter(None, input().strip().split(',')))]
+        configs_for_delete = [saved_cable_position_with_id[id] for id in input_ids]
 
-        with open(fp, 'w') as file:
-            json.dump(configs_for_dump, file)
+        new_configs = []
 
+        for saved_config in saved_cables_positions:
+            if saved_config not in configs_for_delete:
+                new_configs.append(saved_config)
 
-        logger.info(f'This configs was deleted successfully: {input_ids}')
+        return new_configs
+
 
     @staticmethod
     def connect_monitors_automatically(data_from_xrandr, fp_to_config_file):
@@ -137,6 +119,7 @@ class Actions:
             monitors_sorted_by_size.reverse()
             monitors_auto_sort = [*monitor_with_lowest_size, *monitors_sorted_by_size]
 
+            # TODO: оно что, затирает придыдущие настройки?
             with open(fp_to_config_file, 'w') as file:
                 json.dump([monitors_auto_sort], file, indent=4)
 

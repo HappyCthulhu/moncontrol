@@ -154,36 +154,43 @@ class Data:
 
         return test
 
+    # @staticmethod
+    # def look_saved_monitors_position(fp):
+    #     if not Path(fp).is_file() or Path(fp).stat().st_size == 0:
+    #         return None
+    #
+    #     # TODO: при попытке мануального позиционрования, выдает ошибку, если файл конфигов пустой
+    #     with open(fp, 'r') as file:
+    #         saved_monitors_positions = json.load(file)
+    #
+    #     locations_of_monitors = []
+    #
+    #     for monitors_position in saved_monitors_positions:
+    #         locations_of_monitors.append([[*monitor][0] for monitor in monitors_position])
+    #
+    #     return locations_of_monitors
+    #
     @staticmethod
-    def look_saved_monitors_position(fp):
-        if not Path(fp).is_file() or Path(fp).stat().st_size == 0:
-            return None
-
-        # TODO: при попытке мануального позиционрования, выдает ошибку, если файл конфигов пустой
-        with open(fp, 'r') as file:
-            saved_monitors_positions = json.load(file)
-
-        locations_of_monitors = []
-
-        for monitors_position in saved_monitors_positions:
-            locations_of_monitors.append([[*monitor][0] for monitor in monitors_position])
-
-        return locations_of_monitors
+    def get_needed_config_automatically(data_from_xrandr, saved_configs):
+        # TODO: точно ли не стоит data_from_xrandr возвращать в формате спика, а не словаря?
+        current_connection = set([[*elem][0] for elem in data_from_xrandr])
+        for saved_config in saved_configs:
+            if current_connection == set(saved_config):
+                return saved_config
 
     @staticmethod
-    def search_for_current_mon_pos_in_previously_saved(data_from_xrandr, fp):
-        with open(fp, 'r') as file:
-            previous_monitor_position = json.load(file)
+    def create_new_collections_of_mon_positions(new_mon_pos, previous_monitor_positions):
 
-        monitors_name_from_xrandr = {[*cable][0] for cable in data_from_xrandr}
+        for id, monitors_names_from_settings in enumerate(previous_monitor_positions):
 
-        for settings in previous_monitor_position:
-            monitors_names_from_settings = {[*cable][0] for cable in settings}
+            if monitors_names_from_settings == new_mon_pos:
+                previous_monitor_positions.insert(0, previous_monitor_positions.pop(id))
+                new_monitors_positions =  previous_monitor_positions
+                return new_monitors_positions
 
-            if monitors_names_from_settings == monitors_name_from_xrandr:
-                return settings
-
-        return None
+        previous_monitor_positions.insert(0, new_mon_pos)
+        new_monitors_positions = previous_monitor_positions
+        return new_monitors_positions
 
 
 logger = set_logger()
