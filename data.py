@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -114,62 +115,25 @@ class Data:
         time.sleep(3)
         monitors = subprocess.check_output('xrandr').decode()
 
-        monitors_data = []
-        for id, string in enumerate(monitors.splitlines()):
+        iterator = re.finditer(r"^\S[\W\w]*?(?=^(\S|$))", monitors, re.MULTILINE)
+        monitors = [match.group() for match in iterator]
+        connected_monitors = list(filter(lambda monitor_data: ' connected' in monitor_data, monitors))
 
-            # если строка начинается не с пробела
-            # TODO: че за виртуальные мониторы и как их убрать из выдачи xrandr
-            if string[0] != ' ' and ' connected' in string:
-
-                # если следующая строка начинается с пробела
-                if id < len(monitors.splitlines()) - 1:
-                    if monitors.splitlines()[id + 1][0] == ' ':
-                        monitors_data.append(string)
-                    else:
-                        continue
-
-                else:
-                    # todo: ну вот последняя строка гипотетически может быть информацией о мониторе...
-                    break
-
-            else:
-
-                if id == 0:
-                    continue
-
-                monitors_data[-1] = f'{monitors_data[-1]}\n{string}'
-
-        monitors_data = list(zip([monitor.split()[0] for monitor in monitors_data], monitors_data))
+        monitors_data = list(zip([monitor.split()[0] for monitor in connected_monitors], connected_monitors))
         physically_connected_monitors_data = {elem[0]: elem[1] for elem in monitors_data}
 
-        test = []
+        data_from_xrandr_about_physically_connected_monitors = []
 
         for port, data in physically_connected_monitors_data.items():
             resolutions = list(filter(lambda word: 'x' in word, ''.join(data.splitlines()[1:-1]).split()))
 
             monitor_size = data.splitlines()[0].split('y axis) ')[1]
-
             monitor_size = [int(option.replace('mm', '')) for option in monitor_size.split('x')]
-            test.append({port: {'resolutions': resolutions, 'monitor_size': monitor_size}})
 
-        return test
+            data_from_xrandr_about_physically_connected_monitors.append({port: {'resolutions': resolutions, 'monitor_size': monitor_size}})
 
-    # @staticmethod
-    # def look_saved_monitors_position(fp):
-    #     if not Path(fp).is_file() or Path(fp).stat().st_size == 0:
-    #         return None
-    #
-    #     # TODO: при попытке мануального позиционрования, выдает ошибку, если файл конфигов пустой
-    #     with open(fp, 'r') as file:
-    #         saved_monitors_positions = json.load(file)
-    #
-    #     locations_of_monitors = []
-    #
-    #     for monitors_position in saved_monitors_positions:
-    #         locations_of_monitors.append([[*monitor][0] for monitor in monitors_position])
-    #
-    #     return locations_of_monitors
-    #
+        return data_from_xrandr_about_physically_connected_monitors
+
     @staticmethod
     def get_needed_config_automatically(data_from_xrandr, saved_configs):
         # TODO: точно ли не стоит data_from_xrandr возвращать в формате спика, а не словаря?
