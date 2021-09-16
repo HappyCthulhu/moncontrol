@@ -92,6 +92,32 @@ def wrong_input(mode, settings):
                     f'\nЗапустите скрит с одной из следующих настроек:{line_break}{line_break}\n'
                     f'{f"{line_break}".join(settings)}')
 
+def choose_one_of_saved_positions_of_monitors():
+    if not Path(MONITORS_CONFIG_FILE_PATH).is_file() or Path(MONITORS_CONFIG_FILE_PATH).stat().st_size == 0:
+        logger.info('Config file empty or doesnt exist')
+
+    else:
+        with open(MONITORS_CONFIG_FILE_PATH, 'r') as file:
+            previously_saved_mons_pos = json.load(file)
+
+        # TODO: возможно, стоит сделать отдельную функцию для принта конфигов
+    logger.info('Next strings will show monitors_positions in format: {config: [cable_1, cable_2, etc]}\n')
+
+    saved_cable_position_with_id = {id: [*monitors_position] for id, monitors_position in
+                                    enumerate(previously_saved_mons_pos)}
+
+    for id, monitors_names in saved_cable_position_with_id.items():
+        print(f'\n{id}: {monitors_names}')
+
+    print('\n')
+    
+    logger.info('Write number of config, that u need rn and press Enter')
+    input_id = int(input())
+
+    execute_command = Actions.create_string_for_execute(saved_cable_position_with_id[input_id])
+    logger.info(execute_command)
+
+
 
 def show_saved_monitors_positions():
     if not Path(MONITORS_CONFIG_FILE_PATH).is_file() or Path(MONITORS_CONFIG_FILE_PATH).stat().st_size == 0:
@@ -117,8 +143,12 @@ def show_saved_monitors_positions():
 def delete_config():
     # TODO: проверить, как ведет себя этот конфиг при попытке удалить несколько мониторов за раз
     # TODO: понять, каким образом xrandr работает с мониторами и не сделать собственное управление без использования xrandr
-    with open(MONITORS_CONFIG_FILE_PATH, 'r') as file:
-        previously_saved_mons_pos = json.load(file)
+    if not Path(MONITORS_CONFIG_FILE_PATH).is_file() or Path(MONITORS_CONFIG_FILE_PATH).stat().st_size == 0:
+        logger.info('Config file empty or doesnt exist')
+
+    else:
+        with open(MONITORS_CONFIG_FILE_PATH, 'r') as file:
+            previously_saved_mons_pos = json.load(file)
 
     new_configs = Actions.delete_saved_config(previously_saved_mons_pos)
 
@@ -134,24 +164,27 @@ def make_parser():
                         help='script will running permanently and check cabels connection. When condition of any cabel change, script will position monitors according to your previous settings.')
     parser.add_argument("-s", "--set-monitors-positions-manually", default=False, action="store_true",
                         help='in this mode u can position monitors (its position only in horizontal line now) much easier, comparing with xrandr')
-    parser.add_argument("-m", "--match-monitor-with-cable", default=False, action="store_true",
-                        help='this command will execute mode, that will help u understand, which monitor connected in specific port')
+    parser.add_argument("-c", "--choose-one-of-saved-positions-of-monitors", default=False, action="store_true",
+                        help='You can pick one of yours previously saved monitors positions settings')
     parser.add_argument("-w", "--watch-saved-positions", default=False, action="store_true",
                         help='show you all previously saved positions of monitors')
+    parser.add_argument("-m", "--match-monitor-with-cable", default=False, action="store_true",
+                        help='this command will execute mode, that will help u understand, which monitor connected in specific port')
     parser.add_argument("-d", "--delete-saved-config", default=False, action="store_true",
                         help='delete certain previously saved configs')
     return parser
 
 
 def start_app(mode):
-    options = ['monitoring_connectivity', 'set_monitors_positions_manually', 'match_monitor_with_cable',
-               'show_saved_positions', 'delete_saved_config']
+    options = ['auto_monitoring_connectivity', 'set_monitors_positions_manually', 'match_monitor_with_cable',
+               'show_saved_positions', 'delete_saved_config', 'choose_one_of_saved_positions_of_monitors']
     start = {
         options[0]: monitoring_activity,
         options[1]: position_manually,
         options[2]: Actions.match_monitor_with_cable,
         options[3]: show_saved_monitors_positions,
-        options[4]: delete_config
+        options[4]: delete_config,
+        options[5]: choose_one_of_saved_positions_of_monitors
     }
 
     start[mode]()
