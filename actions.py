@@ -34,15 +34,16 @@ class Actions:
     def create_string_for_execute(monitors_data: list):
 
 
-        """ 
-        sometimes, on some devices, xrandr works better, if u will enter commands sequentially.
-        so, its better to write command, each parts of which divided be |
-        """
         execute_command = []
 
         for id, cable_name in enumerate(monitors_data):
             if len(monitors_data) == id + 1:
                 break
+
+            """ 
+            sometimes, on some devices, xrandr works better, if u will enter commands sequentially.
+            so, its better to write command, each parts of which divided be |
+            """
 
             execute_command.append(
                 f'xrandr --output {cable_name} --left-of {monitors_data[id + 1]} | ')

@@ -82,6 +82,9 @@ def position_manually():
 
     logger.info('Settings was saved successfully')
 
+    execute_command = Actions.create_string_for_execute(new_collection_of_monitors_positions[0])
+    logger.info(execute_command)
+
 
 def wrong_input(mode, settings):
     line_break = '\n'
@@ -127,13 +130,13 @@ def delete_config():
 
 def make_parser():
     parser = argparse.ArgumentParser(description="Arguments:")
-    parser.add_argument("-m", "--monitoring-connectivity", default=False, action="store_true",
+    parser.add_argument("-a", "--auto-monitoring-connectivity", default=False, action="store_true",
                         help='script will running permanently and check cabels connection. When condition of any cabel change, script will position monitors according to your previous settings.')
     parser.add_argument("-s", "--set-monitors-positions-manually", default=False, action="store_true",
                         help='in this mode u can position monitors (its position only in horizontal line now) much easier, comparing with xrandr')
-    parser.add_argument("-c", "--match-monitor-with-cable", default=False, action="store_true",
+    parser.add_argument("-m", "--match-monitor-with-cable", default=False, action="store_true",
                         help='this command will execute mode, that will help u understand, which monitor connected in specific port')
-    parser.add_argument("-p", "--show-saved-positions", default=False, action="store_true",
+    parser.add_argument("-w", "--watch-saved-positions", default=False, action="store_true",
                         help='show you all previously saved positions of monitors')
     parser.add_argument("-d", "--delete-saved-config", default=False, action="store_true",
                         help='delete certain previously saved configs')
