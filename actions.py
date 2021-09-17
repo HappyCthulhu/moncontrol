@@ -1,4 +1,3 @@
-import json
 import os
 import time
 from collections import OrderedDict
@@ -13,7 +12,7 @@ class Actions:
     def set_monitors_position_manually():
         monitors_data_from_xrandr = Data.get_monitors_data_from_xrandr()
 
-        cables_ids_names = {id: cable for id, cable in enumerate([*monitors_data_from_xrandr])}
+        cables_ids_names = Actions.create_cable_id_cable_name_dict([*monitors_data_from_xrandr])
 
         logger.info(
             f"\n\nВот список подключенных мониторов в формате 'monitor_id --- monitor_name':\n"
@@ -32,7 +31,7 @@ class Actions:
         return ordered_monitors
 
     @staticmethod
-    def create_string_for_execute(monitors_data: list):
+    def create_string_for_execute(monitors_data: list[str]):
         execute_command = []
 
         # TODO: сюда еще дописать логгирование: в xrandr нет указанного вами монитора: monitor_name
@@ -61,6 +60,18 @@ class Actions:
         return execute_command
 
     @staticmethod
+    def create_cable_id_cable_name_dict(cables_names: list[str]):
+        cables_ids_names = {id: cable for id, cable in enumerate(list(cables_names))}
+        return cables_ids_names
+
+    @staticmethod
+    def create_layout_id_layout_name_dict(cables_layout: list[list[str]]):
+        cables_ids_names = {id: [*monitors_position] for id, monitors_position in
+                            enumerate(cables_layout)}
+
+        return cables_ids_names
+
+    @staticmethod
     def get_monitor_dimensions(monitor_dimensions):
         return monitor_dimensions[0] * monitor_dimensions[1]
 
@@ -69,11 +80,12 @@ class Actions:
         monitors_data_from_xrandr = Data.get_monitors_data_from_xrandr()
 
         # TODO: вот это у меня во многих местах встречается, нужно в отдельную функцию вынести
-        cables_ids_names = {id: cable for id, cable in enumerate(list(monitors_data_from_xrandr.keys()))}
+
+        cables_ids_names = Actions.create_cable_id_cable_name_dict(monitors_data_from_xrandr.keys())
 
         # TODO: вот это в отдельную функцию вынести, ибо используется в разных местах
         logger.info(
-            f"\n\nВот список портов, к которым подключенны мониторы в формате 'port_id --- port_name':\n"
+            f"\n\nВот список портов, к которым подключены мониторы в формате 'port_id --- port_name':\n"
             f"{[f'{cable_id} --- {cable_name}' for cable_id, cable_name in cables_ids_names.items()]}\n"
             f'\n'
             f'Ниже введите id порта, чтобы узнать, какой монитор к нему подключен\n')
@@ -96,8 +108,7 @@ class Actions:
     @staticmethod
     def delete_saved_config(saved_cables_positions):
 
-        saved_cable_position_with_id = {id: [*monitors_position] for id, monitors_position in
-                                        enumerate(saved_cables_positions)}
+        saved_cable_position_with_id = Actions.create_layout_id_layout_name_dict(saved_cables_positions)
 
         logger.info('Next strings will show monitors_positions in format: {config: [cable_1, cable_2, etc]}\n')
         for id, monitors_names in saved_cable_position_with_id.items():
@@ -117,11 +128,12 @@ class Actions:
 
         return new_configs
 
-
     @staticmethod
     def connect_monitors_automatically(data_from_xrandr):
         if len(data_from_xrandr) > 1:
-            monitors_sorted_by_size = list(OrderedDict(sorted(list(data_from_xrandr.items()), key=lambda value: Actions.get_monitor_dimensions(value[1]['monitor_size']))).keys())
+            monitors_sorted_by_size = list(OrderedDict(sorted(list(data_from_xrandr.items()),
+                                                              key=lambda value: Actions.get_monitor_dimensions(
+                                                                  value[1]['monitor_size']))).keys())
             # TODO: нужно описать кейсы, когда в этой функции вообще есть смысл
             # например, если скрипт начал работу на заднем плане. Чтоб хоть как-то моники подрубились... Удобнее работать?
 

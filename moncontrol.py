@@ -125,10 +125,11 @@ def choose_one_of_saved_positions_of_monitors():
             previously_saved_mons_pos = json.load(file)
 
         # TODO: возможно, стоит сделать отдельную функцию для принта конфигов
-    logger.info('Next strings will show monitors_positions in format: {config: [cable_1, cable_2, etc]}\n')
+    if not previously_saved_mons_pos:
+        logger.info('You did not save any monitors layouts yet')
+    logger.info('Next strings will show monitors_positions in format: {config_id: [cable_1, cable_2, etc]}\n')
 
-    saved_cable_position_with_id = {id: [*monitors_position] for id, monitors_position in
-                                    enumerate(previously_saved_mons_pos)}
+    saved_cable_position_with_id = Actions.create_layout_id_layout_name_dict(previously_saved_mons_pos)
 
     for id, monitors_names in saved_cable_position_with_id.items():
         print(f'\n{id}: {monitors_names}')
@@ -151,22 +152,18 @@ def show_saved_monitors_positions():
         with open(MONITORS_LAYOUTS_FILE_PATH, 'r') as file:
             saved_positions = json.load(file)
 
-        saved_positions_with_position_id = [{id: monitors_position} for id, monitors_position in
-                                            enumerate(saved_positions)]
+        saved_positions_with_position_id = Actions.create_layout_id_layout_name_dict(saved_positions)
+
 
         logger.info(
             'Next strings will show monitors_positions in format: {monitors_position_id: [cabel_1, cabel_2, etc]}')
-        time.sleep(0.1)
-        for monitor_id_position in saved_positions_with_position_id:
-            print('\n')
-            print(monitor_id_position)
 
+        for id, monitors_names in saved_positions_with_position_id.items():
+            print(f'\n{id}: {monitors_names}')
         print('\n')
 
 
 def delete_config():
-    # TODO: проверить, как ведет себя этот конфиг при попытке удалить несколько мониторов за раз
-    # TODO: понять, каким образом xrandr работает с мониторами и не сделать собственное управление без использования xrandr
     if not Path(MONITORS_LAYOUTS_FILE_PATH).is_file() or Path(MONITORS_LAYOUTS_FILE_PATH).stat().st_size == 0:
         logger.info('Config file empty or doesnt exist')
 
