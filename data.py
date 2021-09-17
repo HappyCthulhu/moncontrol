@@ -2,7 +2,6 @@ import json
 import os
 import re
 import subprocess
-import time
 from pathlib import Path
 
 from logging_settings import set_logger
@@ -111,7 +110,6 @@ class Data:
 
     @staticmethod
     def get_monitors_data_from_xrandr():
-        time.sleep(3)
         monitors = subprocess.check_output('xrandr').decode()
 
         iterator = re.finditer(r"^\S[\W\w]*?(?=^(\S|$))", monitors, re.MULTILINE)
@@ -121,7 +119,7 @@ class Data:
         monitors_data = list(zip([monitor.split()[0] for monitor in connected_monitors], connected_monitors))
         physically_connected_monitors_data = {elem[0]: elem[1] for elem in monitors_data}
 
-        data_from_xrandr_about_physically_connected_monitors = []
+        data_from_xrandr_about_physically_connected_monitors = {}
 
         for port, data in physically_connected_monitors_data.items():
             resolutions = list(filter(lambda word: 'x' in word, ''.join(data.splitlines()[1:-1]).split()))
@@ -129,17 +127,21 @@ class Data:
             monitor_size = data.splitlines()[0].split('y axis) ')[1]
             monitor_size = [int(option.replace('mm', '')) for option in monitor_size.split('x')]
 
-            data_from_xrandr_about_physically_connected_monitors.append({port: {'resolutions': resolutions, 'monitor_size': monitor_size}})
+            data_from_xrandr_about_physically_connected_monitors[port] = {'resolutions': resolutions,
+                                                                          'monitor_size': monitor_size}
 
         return data_from_xrandr_about_physically_connected_monitors
 
     @staticmethod
     def get_needed_config_automatically(data_from_xrandr, saved_configs):
-        # TODO: точно ли не стоит data_from_xrandr возвращать в формате спика, а не словаря?
-        current_connection = set([[*elem][0] for elem in data_from_xrandr])
+        # TODO: вот здесь нужно посмотреть, что происходит
+        current_connection = set([elem for elem in [*data_from_xrandr]])
+
         for saved_config in saved_configs:
             if current_connection == set(saved_config):
                 return saved_config
+
+        return None
 
     @staticmethod
     def create_new_collections_of_mon_positions(new_mon_pos, previous_monitor_positions):
@@ -148,7 +150,7 @@ class Data:
 
             if monitors_names_from_settings == new_mon_pos:
                 previous_monitor_positions.insert(0, previous_monitor_positions.pop(id))
-                new_monitors_positions =  previous_monitor_positions
+                new_monitors_positions = previous_monitor_positions
                 return new_monitors_positions
 
         previous_monitor_positions.insert(0, new_mon_pos)

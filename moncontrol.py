@@ -8,6 +8,16 @@ from actions import Actions
 from data import Data
 from logging_settings import set_logger
 
+# TODO: в режиме "auto-monitoring-connectivity": конец json-файла выглядит так: "/sys/class/drm/card0/card0-DP-1":
+# думаю, это связано с отсутствием какого-то порта в принципе. Нужно None возвращать, а не пустое пространство
+# очистить файл cables_conditions и запустить auto-monitoring. Баг пойман
+
+# TODO: формирование словаря {config_id: config_value} в функцию вынести
+# TODO: в readme сказать необходимость установить direnv
+# TODO: логгирование: dict doesnt contain position with this id!
+# TODO: логгирование: there is nothing to delete!
+# TODO: добавить логгирование: "ожидаем данных от xrandr"
+# TODO: добавить Colorama для нормального консольного вывода
 # TODO: начать писать тесты
 # TODO: стоит ли заменить тыканье в shell на более профессиональные инструменты типа sh?
 # TODO: оставшиеся TODO перевести на англ
@@ -31,32 +41,43 @@ def get_and_write_virtual_env():
 
 def monitoring_activity():
     while True:
-        # TODO: вот эта часть не готова еще
         Data.check_for_changes_in_cable_conditions_until_it_change(CABLES_CONDITIONS_FILE_PATH)
         monitors_data_from_xrandr = Data.get_monitors_data_from_xrandr()
 
-        with open(MONITORS_CONFIG_FILE_PATH, 'r') as file:
-            previously_saved_mons_pos = json.load(file)
+        # TODO: при пустом файлу st_size возвращает 1, а не 0... wtf
+        print(Path(MONITORS_LAYOUTS_FILE_PATH).stat().st_size)
 
-        if not Path(MONITORS_CONFIG_FILE_PATH).is_file() or Path(MONITORS_CONFIG_FILE_PATH).stat().st_size == 0:
-            location_of_monitors = Actions.connect_monitors_automatically(monitors_data_from_xrandr,
-                                                                          MONITORS_CONFIG_FILE_PATH)
-            execute_command = Actions.create_string_for_execute(location_of_monitors)
-
-        elif len(monitors_data_from_xrandr) == 1:
+        if len(monitors_data_from_xrandr) == 1:
             execute_command = 'xrandr --auto'
+            logger.info(execute_command)
+
+        if not Path(MONITORS_LAYOUTS_FILE_PATH).is_file() or Path(MONITORS_LAYOUTS_FILE_PATH).stat().st_size < 2:
+            position_manually()
 
         else:
+            with open(MONITORS_LAYOUTS_FILE_PATH, 'r') as file:
+                previously_saved_mons_pos = json.load(file)
+
             location_of_monitors = Data.get_needed_config_automatically(monitors_data_from_xrandr, previously_saved_mons_pos)
 
-            if not location_of_monitors:
-                location_of_monitors = Actions.connect_monitors_automatically(monitors_data_from_xrandr,
-                                                                              MONITORS_CONFIG_FILE_PATH)
+            if location_of_monitors:
+                execute_command = Actions.create_string_for_execute(location_of_monitors)
+                logger.debug(f'Позиционируем мониторы согласно сохраненным ранее настройкам: {location_of_monitors}')
 
-            execute_command = Actions.create_string_for_execute(location_of_monitors)
-            logger.debug(f'Позиционируем мониторы согласно сохраненным ранее настройкам: {location_of_monitors}')
+                logger.info(execute_command)
 
-        logger.info(execute_command)
+            else:
+                logger.info('Config with previous monitor layouts doesnt contains current connected cables. Connecting monitors with sorting by monitors size. If you want to set monitors by yout self, use command: "moncotrol -s"')
+                monitors_sorted_by_size = Actions.connect_monitors_automatically(monitors_data_from_xrandr)
+
+                with open(MONITORS_LAYOUTS_FILE_PATH, 'w') as file:
+                    json.dump(monitors_sorted_by_size, file, indent=4)
+
+                execute_command = Actions.create_string_for_execute(monitors_sorted_by_size)
+
+                logger.info(execute_command)
+
+        time.sleep(3)
 
         # os.system(execute_command)
 
@@ -64,18 +85,28 @@ def monitoring_activity():
 def position_manually():
     my_monitors_position = Actions.set_monitors_position_manually()
 
-    with open(MONITORS_CONFIG_FILE_PATH, 'r') as file:
-        previously_saved_mons_pos = json.load(file)
+    # TODO: сделать проверку на существование и пустоту файла
 
-    new_collection_of_monitors_positions = Data.create_new_collections_of_mon_positions(my_monitors_position,
-                                                                                        previously_saved_mons_pos)
+    if not Path(MONITORS_LAYOUTS_FILE_PATH).is_file() or Path(MONITORS_LAYOUTS_FILE_PATH).stat().st_size < 2:
 
-    with open(MONITORS_CONFIG_FILE_PATH, 'w') as file:
-        json.dump(new_collection_of_monitors_positions, file, indent=4)
+        with open(MONITORS_LAYOUTS_FILE_PATH, 'w') as file:
+            json.dump([my_monitors_position], file)
+
+        execute_command = Actions.create_string_for_execute(my_monitors_position)
+
+    else:
+        with open(MONITORS_LAYOUTS_FILE_PATH, 'r') as file:
+            previously_saved_mons_pos = json.load(file)
+
+        new_collection_of_monitors_positions = Data.create_new_collections_of_mon_positions(my_monitors_position,
+                                                                                            previously_saved_mons_pos)
+
+        with open(MONITORS_LAYOUTS_FILE_PATH, 'w') as file:
+            json.dump(new_collection_of_monitors_positions, file, indent=4)
+
+        execute_command = Actions.create_string_for_execute(new_collection_of_monitors_positions[0])
 
     logger.info('Settings was saved successfully')
-
-    execute_command = Actions.create_string_for_execute(new_collection_of_monitors_positions[0])
     logger.info(execute_command)
 
 
@@ -86,11 +117,11 @@ def wrong_input(mode, settings):
                     f'{f"{line_break}".join(settings)}')
 
 def choose_one_of_saved_positions_of_monitors():
-    if not Path(MONITORS_CONFIG_FILE_PATH).is_file() or Path(MONITORS_CONFIG_FILE_PATH).stat().st_size == 0:
+    if not Path(MONITORS_LAYOUTS_FILE_PATH).is_file() or Path(MONITORS_LAYOUTS_FILE_PATH).stat().st_size == 0:
         logger.info('Config file empty or doesnt exist')
 
     else:
-        with open(MONITORS_CONFIG_FILE_PATH, 'r') as file:
+        with open(MONITORS_LAYOUTS_FILE_PATH, 'r') as file:
             previously_saved_mons_pos = json.load(file)
 
         # TODO: возможно, стоит сделать отдельную функцию для принта конфигов
@@ -113,11 +144,11 @@ def choose_one_of_saved_positions_of_monitors():
 
 
 def show_saved_monitors_positions():
-    if not Path(MONITORS_CONFIG_FILE_PATH).is_file() or Path(MONITORS_CONFIG_FILE_PATH).stat().st_size == 0:
+    if not Path(MONITORS_LAYOUTS_FILE_PATH).is_file() or Path(MONITORS_LAYOUTS_FILE_PATH).stat().st_size == 0:
         logger.info('Config file empty or doesnt exist')
 
     else:
-        with open(MONITORS_CONFIG_FILE_PATH, 'r') as file:
+        with open(MONITORS_LAYOUTS_FILE_PATH, 'r') as file:
             saved_positions = json.load(file)
 
         saved_positions_with_position_id = [{id: monitors_position} for id, monitors_position in
@@ -136,16 +167,16 @@ def show_saved_monitors_positions():
 def delete_config():
     # TODO: проверить, как ведет себя этот конфиг при попытке удалить несколько мониторов за раз
     # TODO: понять, каким образом xrandr работает с мониторами и не сделать собственное управление без использования xrandr
-    if not Path(MONITORS_CONFIG_FILE_PATH).is_file() or Path(MONITORS_CONFIG_FILE_PATH).stat().st_size == 0:
+    if not Path(MONITORS_LAYOUTS_FILE_PATH).is_file() or Path(MONITORS_LAYOUTS_FILE_PATH).stat().st_size == 0:
         logger.info('Config file empty or doesnt exist')
 
     else:
-        with open(MONITORS_CONFIG_FILE_PATH, 'r') as file:
+        with open(MONITORS_LAYOUTS_FILE_PATH, 'r') as file:
             previously_saved_mons_pos = json.load(file)
 
     new_configs = Actions.delete_saved_config(previously_saved_mons_pos)
 
-    with open(MONITORS_CONFIG_FILE_PATH, 'w') as file:
+    with open(MONITORS_LAYOUTS_FILE_PATH, 'w') as file:
         json.dump(new_configs, file)
 
     logger.info(f'This configs was deleted successfully: {[config for config in previously_saved_mons_pos if config not in new_configs]}')
@@ -189,7 +220,7 @@ if __name__ == '__main__':
     if not os.environ.get('CABLES_DIR'):
         get_and_write_virtual_env()
 
-    MONITORS_CONFIG_FILE_PATH = 'my_monitor_layout.json'
+    MONITORS_LAYOUTS_FILE_PATH = 'my_monitor_layout.json'
     CABLES_CONDITIONS_FILE_PATH = 'cables_conditions_from_card0.json'
 
     args = make_parser().parse_args()

@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from collections import OrderedDict
 
 from data import Data
 from logging_settings import set_logger
@@ -12,7 +13,7 @@ class Actions:
     def set_monitors_position_manually():
         monitors_data_from_xrandr = Data.get_monitors_data_from_xrandr()
 
-        cables_ids_names = {id: [*cable][0] for id, cable in enumerate(monitors_data_from_xrandr)}
+        cables_ids_names = {id: cable for id, cable in enumerate([*monitors_data_from_xrandr])}
 
         logger.info(
             f"\n\nВот список подключенных мониторов в формате 'monitor_id --- monitor_name':\n"
@@ -32,9 +33,10 @@ class Actions:
 
     @staticmethod
     def create_string_for_execute(monitors_data: list):
-
-
         execute_command = []
+
+        # TODO: сюда еще дописать логгирование: в xrandr нет указанного вами монитора: monitor_name
+        xrandr_data = Data.get_monitors_data_from_xrandr()
 
         for id, cable_name in enumerate(monitors_data):
             if len(monitors_data) == id + 1:
@@ -43,13 +45,17 @@ class Actions:
             """ 
             sometimes, on some devices, xrandr works better, if u will enter commands sequentially.
             so, its better to write command, each parts of which divided be |
+            also, we creating command with top quality of each monitor
             """
 
+            # TODO: первый аргумент в пользу данных из xrandr в формате словаря: можно будет спокойно получать информацию о мониторе по названию подключенного к нему кабеля. При использовании списка приходится юзать filter
+
             execute_command.append(
-                f'xrandr --output {cable_name} --left-of {monitors_data[id + 1]} | ')
+                f'xrandr --output {cable_name} --pos {xrandr_data[cable_name]["resolutions"][0]} --left-of {monitors_data[id + 1]} --pos {xrandr_data[monitors_data[id + 1]]["resolutions"][0]} | ')
 
         execute_command = ' '.join(execute_command)
 
+        # cleaning spaces
         execute_command = execute_command[0: -3]
 
         return execute_command
@@ -62,7 +68,8 @@ class Actions:
     def match_monitor_with_cable():
         monitors_data_from_xrandr = Data.get_monitors_data_from_xrandr()
 
-        cables_ids_names = {id: [*cable][0] for id, cable in enumerate(monitors_data_from_xrandr)}
+        # TODO: вот это у меня во многих местах встречается, нужно в отдельную функцию вынести
+        cables_ids_names = {id: cable for id, cable in enumerate(list(monitors_data_from_xrandr.keys()))}
 
         # TODO: вот это в отдельную функцию вынести, ибо используется в разных местах
         logger.info(
@@ -112,19 +119,13 @@ class Actions:
 
 
     @staticmethod
-    def connect_monitors_automatically(data_from_xrandr, fp_to_config_file):
+    def connect_monitors_automatically(data_from_xrandr):
         if len(data_from_xrandr) > 1:
-            monitors_sorted_by_size = sorted(data_from_xrandr, key=lambda monitor: Actions.get_monitor_dimensions(
-                list(monitor.values())[0]['monitor_size']))
-            monitor_with_lowest_size = [monitors_sorted_by_size.pop(0)]
-            monitors_sorted_by_size.reverse()
-            monitors_auto_sort = [*monitor_with_lowest_size, *monitors_sorted_by_size]
+            monitors_sorted_by_size = list(OrderedDict(sorted(list(data_from_xrandr.items()), key=lambda value: Actions.get_monitor_dimensions(value[1]['monitor_size']))).keys())
+            # TODO: нужно описать кейсы, когда в этой функции вообще есть смысл
+            # например, если скрипт начал работу на заднем плане. Чтоб хоть как-то моники подрубились... Удобнее работать?
 
-            # TODO: оно что, затирает придыдущие настройки?
-            with open(fp_to_config_file, 'w') as file:
-                json.dump([monitors_auto_sort], file, indent=4)
-
-            return monitors_auto_sort
+            return monitors_sorted_by_size
 
         else:
             os.system('xrandr --auto')
