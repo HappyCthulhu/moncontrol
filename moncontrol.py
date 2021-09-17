@@ -8,11 +8,7 @@ from actions import Actions
 from data import Data
 from logging_settings import set_logger
 
-# TODO: нереализована функция "выбрать из существующих позиций"
-
-
-# TODO: переименовать короткие названия функций
-
+# TODO: начать писать тесты
 # TODO: стоит ли заменить тыканье в shell на более профессиональные инструменты типа sh?
 # TODO: оставшиеся TODO перевести на англ
 # TODO: не отлавливает отключение всего одного монитора. Вроде фиксил, проверить
@@ -47,7 +43,6 @@ def monitoring_activity():
                                                                           MONITORS_CONFIG_FILE_PATH)
             execute_command = Actions.create_string_for_execute(location_of_monitors)
 
-        # TODO: раскомментить
         elif len(monitors_data_from_xrandr) == 1:
             execute_command = 'xrandr --auto'
 
@@ -60,8 +55,6 @@ def monitoring_activity():
 
             execute_command = Actions.create_string_for_execute(location_of_monitors)
             logger.debug(f'Позиционируем мониторы согласно сохраненным ранее настройкам: {location_of_monitors}')
-            # TODO: добавить возможность сохранять несколько разных позиций мониторов. Проверять, соответствует ли ныняшняя позиция одной из присутствующих в конфиге. Находить ее
-            # TODO: а позиционировать автоматически можно по последней использованной позиции
 
         logger.info(execute_command)
 
@@ -110,7 +103,7 @@ def choose_one_of_saved_positions_of_monitors():
         print(f'\n{id}: {monitors_names}')
 
     print('\n')
-    
+
     logger.info('Write number of config, that u need rn and press Enter')
     input_id = int(input())
 
@@ -177,7 +170,7 @@ def make_parser():
 
 def start_app(mode):
     options = ['auto_monitoring_connectivity', 'set_monitors_positions_manually', 'match_monitor_with_cable',
-               'show_saved_positions', 'delete_saved_config', 'choose_one_of_saved_positions_of_monitors']
+               'watch_saved_positions', 'delete_saved_config', 'choose_one_of_saved_positions_of_monitors']
     start = {
         options[0]: monitoring_activity,
         options[1]: position_manually,

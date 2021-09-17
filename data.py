@@ -45,7 +45,6 @@ class Data:
                 removed_cables.append(port_path.split("/")[-1])
                 past_cables_conditions[port_path] = current_cable_status
 
-                # TODO: возможно стоит вынести это из функции. Просто возвращать не только removed_cables, но
                 with open(cables_conditions_file_path, 'w') as file:
                     json.dump(past_cables_conditions, file, indent=4)
 
