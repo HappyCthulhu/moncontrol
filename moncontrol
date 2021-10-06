@@ -1,0 +1,6 @@
+#!/bin/bash
+cd path_to_directory_that_consist_this_repo && poetry run python moncontrol.py $1
+
+
+
+
