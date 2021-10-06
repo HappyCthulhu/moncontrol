@@ -31,8 +31,7 @@ optional arguments:
 - ```poetry install```
 - make file "moncontrol" executable
 - copy file "moncontrol" to /bin directory
-- open /bin/moncontrol file, change "path=$(pwd)" to directory, that consist this moncontrol repo, like: "path=$(/home/user/moncontrol)"
-- check moncontrol with command:
-```moncontrol --help```
+- open /bin/moncontrol file, change ```path=$(pwd)``` to directory, that consist this moncontrol repo, like: ```path=$(/home/user/moncontrol)```
+- check moncontrol with command: ```moncontrol --help```
 
 If u want moncontrol works permanently, u can add moncontrol -m to your systemctl
