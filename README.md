@@ -26,8 +26,8 @@ optional arguments:
 ## Setup:
 - install poetry (this is modern pip`s analog): https://python-poetry.org/docs/
 - install direnv (its not obligatory, but helpfull)
-- clone this repo to your directory
 ```
+git clone https://github.com/HappyCthulhu/moncontrol/blob/master/README.md
 cd moncontrol
 poetry install
 sudo ./setup
