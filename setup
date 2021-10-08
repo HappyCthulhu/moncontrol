@@ -1,4 +1,5 @@
 #!/bin/bash
+poetry install
 mkdir configs
 path=$(pwd)
 
