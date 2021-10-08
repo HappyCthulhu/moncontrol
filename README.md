@@ -24,8 +24,9 @@ optional arguments:
 - xrandr
 
 ## Setup:
-- install [poetry](https://python-poetry.org/docs/) (this is modern pip`s analog) with curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-- install direnv (its not obligatory, but helpfull)
+- install [poetry](https://python-poetry.org/docs/) (this is modern pip`s analog) with:  
+```curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -```
+- install [direnv](https://direnv.net/) (its not obligatory, but helpfull)
 ```
 
 git clone https://github.com/HappyCthulhu/moncontrol
