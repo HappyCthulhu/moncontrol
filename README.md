@@ -24,7 +24,7 @@ optional arguments:
 - xrandr
 
 ## Setup:
-- install [poetry] (https://python-poetry.org/docs/) (this is modern pip`s analog) with curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+- install [poetry](https://python-poetry.org/docs/) (this is modern pip`s analog) with curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 - install direnv (its not obligatory, but helpfull)
 ```
 
