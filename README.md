@@ -27,9 +27,11 @@ optional arguments:
 - install poetry (this is modern pip`s analog): https://python-poetry.org/docs/
 - install direnv (its not obligatory, but helpfull)
 - clone this repo to your directory
-- go to this repos directory
-- make file "moncontrol" executable
-- execute command: ```sudo ./setup```
-- check moncontrol with command: ```moncontrol --help```
+```
+cd moncontrol
+poetry install
+sudo ./setup
+moncontrol -h
+```
 
 If u want moncontrol works permanently, u can add moncontrol -m to your systemctl
