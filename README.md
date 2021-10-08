@@ -24,9 +24,10 @@ optional arguments:
 - xrandr
 
 ## Setup:
-- install poetry (this is modern pip`s analog): https://python-poetry.org/docs/
+- install [poetry] (https://python-poetry.org/docs/) (this is modern pip`s analog) with curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 - install direnv (its not obligatory, but helpfull)
 ```
+
 git clone https://github.com/HappyCthulhu/moncontrol
 cd moncontrol
 poetry install
