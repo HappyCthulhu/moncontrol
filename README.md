@@ -1,4 +1,4 @@
-## What this script can 
+## What this script can do:
 
 Commands:  
 usage: moncontrol.py [-h] [-m] [-s] [-c] [-p] [-d]
@@ -27,7 +27,7 @@ optional arguments:
 
 ## Setup:
 ### Install dependencies:
-
+- install xorg and xrandr (but you probably already have them)
 - install poetry with:  
 ```curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -```
 - install direnv
