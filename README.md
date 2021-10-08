@@ -29,7 +29,7 @@ optional arguments:
 - clone this repo to your directory
 - go to this repos directory
 - make file "moncontrol" executable
-- execute command: ```sudo ./moncontrol```
+- execute command: ```sudo ./setup```
 - check moncontrol with command: ```moncontrol --help```
 
 If u want moncontrol works permanently, u can add moncontrol -m to your systemctl
