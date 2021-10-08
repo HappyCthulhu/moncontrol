@@ -1,5 +1,4 @@
 import json
-import os
 import time
 from pathlib import Path
 
@@ -7,9 +6,9 @@ from card0_manager import Card0
 from logging_settings import set_logger
 from monitors_manager import Monitors
 from xrandrmanager import XrandrManager
+
+
 class Launch:
-
-
 
     @staticmethod
     def monitoring_activity():
@@ -23,7 +22,8 @@ class Launch:
 
             # при пустом файлу st_size возвращает 1, а не 0...
             if not Path(MONITORS_LAYOUTS_FILE_PATH).is_file() or Path(MONITORS_LAYOUTS_FILE_PATH).stat().st_size < 2:
-                position_manually()
+                monitors = Monitors()
+                monitors.set_monitors_position_manually()
 
             else:
                 with open(MONITORS_LAYOUTS_FILE_PATH, 'r') as file:
@@ -34,7 +34,8 @@ class Launch:
 
                 if location_of_monitors:
                     execute_command = xrandr.create_string_for_execute(xrandr.monitors_data, location_of_monitors)
-                    logger.debug(f'Позиционируем мониторы согласно сохраненным ранее настройкам: {location_of_monitors}')
+                    logger.debug(
+                        f'Позиционируем мониторы согласно сохраненным ранее настройкам: {location_of_monitors}')
 
                     logger.info(execute_command)
 
@@ -53,7 +54,6 @@ class Launch:
             time.sleep(3)
 
             # os.system(execute_command)
-
 
     @staticmethod
     def position_manually():
@@ -87,13 +87,11 @@ class Launch:
         logger.info('Settings was saved successfully')
         logger.info(execute_command)
 
-
     def wrong_input(mode, settings):
         line_break = '\n'
         logger.critical(f'\nСкрипт не имеет настройки: {mode}\n\n'
                         f'\nЗапустите скрит с одной из следующих настроек:{line_break}{line_break}\n'
                         f'{f"{line_break}".join(settings)}')
-
 
     @staticmethod
     def choose_one_of_saved_positions_of_monitors():
@@ -124,7 +122,6 @@ class Launch:
         execute_command = xrandr.create_string_for_execute(xrandr.monitors_data, saved_cable_position_with_id[input_id])
         logger.info(execute_command)
 
-
     @staticmethod
     def show_saved_monitors_positions():
         if not Path(MONITORS_LAYOUTS_FILE_PATH).is_file() or Path(MONITORS_LAYOUTS_FILE_PATH).stat().st_size == 0:
@@ -143,7 +140,6 @@ class Launch:
                 print(f'\n{id}: {monitors_names}')
             print('\n')
 
-
     @staticmethod
     def delete_config():
         if not Path(MONITORS_LAYOUTS_FILE_PATH).is_file() or Path(MONITORS_LAYOUTS_FILE_PATH).stat().st_size == 0:
@@ -160,6 +156,7 @@ class Launch:
 
         logger.info(
             f'This configs was deleted successfully: {[config for config in previously_saved_mons_pos if config not in new_configs]}')
+
 
 logger = set_logger()
 MONITORS_LAYOUTS_FILE_PATH = 'my_monitor_layout.json'

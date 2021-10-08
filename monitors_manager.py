@@ -8,6 +8,7 @@ from xrandrmanager import XrandrManager
 
 
 class Monitors(XrandrManager):
+    # TODO: стоит ли вообще наследование делать? Из-за этого приходится создавать экземпляр класса, а ведь это используется только в ф-и set_monitors_position_manually
 
     def set_monitors_position_manually(self):
         monitors_data_from_xrandr = self.monitors_data
