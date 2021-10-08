@@ -159,5 +159,6 @@ class Launch:
 
 
 logger = set_logger()
-MONITORS_LAYOUTS_FILE_PATH = 'my_monitor_layout.json'
-CABLES_CONDITIONS_FILE_PATH = 'cables_conditions_from_card0.json'
+
+MONITORS_LAYOUTS_FILE_PATH = Path('..', 'my_monitor_layout.json')
+CABLES_CONDITIONS_FILE_PATH = Path('..' + 'cables_conditions_from_card0.json')
