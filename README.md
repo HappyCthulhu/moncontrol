@@ -22,17 +22,28 @@ optional arguments:
 ## Dependencies:
 - xorg
 - xrandr
+- [poetry](https://python-poetry.org/docs/) (this is modern pip`s analog)
+- [direnv](https://direnv.net/) (its not obligatory, but helpfull)
 
 ## Setup:
-- install [poetry](https://python-poetry.org/docs/) (this is modern pip`s analog) with:  
-```curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -```
-- install [direnv](https://direnv.net/) (its not obligatory, but helpfull)
-```
+### Install dependencies:
 
+- install poetry with:  
+```curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -```
+- install direnv
+
+### Install moncontrol:
+
+```sh
+# clone this repo
 git clone https://github.com/HappyCthulhu/moncontrol
+# go to moncontrol directory
 cd moncontrol
+# create virtual enviropment
 poetry install
+# launch script, that create moncontrol-bash script in /bin
 sudo ./setup
+# check moncontrol work
 moncontrol -h
 ```
 
