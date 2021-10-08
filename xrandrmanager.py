@@ -2,7 +2,7 @@ import re
 import subprocess
 
 
-class XRANDR_MANAGER:
+class XrandrManager:
     def __init__(self):
         self.monitors_data = self.get_monitors_data()
 

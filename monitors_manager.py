@@ -4,15 +4,15 @@ import time
 from collections import OrderedDict
 
 from logging_settings import set_logger
-from xrandr_manager import XRANDR_MANAGER
+from xrandrmanager import XrandrManager
 
 
-class MONITORS(XRANDR_MANAGER):
+class Monitors(XrandrManager):
 
     def set_monitors_position_manually(self):
         monitors_data_from_xrandr = self.monitors_data
 
-        cables_ids_names = XRANDR_MANAGER.create_cable_id_cable_name_dict([*monitors_data_from_xrandr])
+        cables_ids_names = XrandrManager.create_cable_id_cable_name_dict([*monitors_data_from_xrandr])
 
         logger.info(
             f"\n\nВот список подключенных мониторов в формате 'monitor_id --- monitor_name':\n"
@@ -35,7 +35,7 @@ class MONITORS(XRANDR_MANAGER):
 
         # TODO: вот это у меня во многих местах встречается, нужно в отдельную функцию вынести
 
-        xrandr = XRANDR_MANAGER()
+        xrandr = XrandrManager()
         cables_ids_names = xrandr.create_cable_id_cable_name_dict(xrandr.monitors_data.keys())
 
         # TODO: вот это в отдельную функцию вынести, ибо используется в разных местах?
@@ -64,7 +64,7 @@ class MONITORS(XRANDR_MANAGER):
     @staticmethod
     def delete_saved_config(saved_cables_positions):
 
-        saved_cable_position_with_id = XRANDR_MANAGER.create_layout_id_layout_name_dict(saved_cables_positions)
+        saved_cable_position_with_id = XrandrManager.create_layout_id_layout_name_dict(saved_cables_positions)
 
         logger.info('Next strings will show monitors_positions in format: {config: [cable_1, cable_2, etc]}\n')
         for id, monitors_names in saved_cable_position_with_id.items():
@@ -89,7 +89,7 @@ class MONITORS(XRANDR_MANAGER):
 
         if len(data_from_xrandr) > 1:
             monitors_sorted_by_size = list(OrderedDict(sorted(list(data_from_xrandr.items()),
-                                                              key=lambda value: XRANDR_MANAGER.get_monitor_dimensions(
+                                                              key=lambda value: XrandrManager.get_monitor_dimensions(
                                                                   value[1]['monitor_size']))).keys())
             # TODO: нужно описать кейсы, когда в этой функции вообще есть смысл
             # например, если скрипт начал работу на заднем плане. Чтоб хоть как-то моники подрубились... Удобнее работать?

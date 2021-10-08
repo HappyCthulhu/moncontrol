@@ -5,7 +5,7 @@ from pathlib import Path
 from logging_settings import set_logger
 
 
-class CARD0:
+class Card0:
 
     @staticmethod
     def check_cable_status(fp):
@@ -36,7 +36,7 @@ class CARD0:
 
         # проходимся по списку из старых кабелей, отдельно получаем текущую информацию для кабеля, сравниваем
         for port_path, port_past_condition in past_cables_conditions.copy().items():
-            current_cable_status = CARD0.check_cable_status(f'{port_path}/status').replace('\n', '')
+            current_cable_status = Card0.check_cable_status(f'{port_path}/status').replace('\n', '')
 
             if current_cable_status != port_past_condition:
                 removed_cables.append(port_path.split("/")[-1])
@@ -76,19 +76,19 @@ class CARD0:
                 logger.debug(f'Файл конфигов был пуст или не существовал')
 
                 with open(cabels_conditions_file_path, 'w') as file:
-                    json.dump(CARD0.get_cables_path_condition_from_card0(), file, indent=4)
+                    json.dump(Card0.get_cables_path_condition_from_card0(), file, indent=4)
                 return True
 
             else:
                 with open(cabels_conditions_file_path, 'r') as file:
                     past_cables_conditions = json.load(file)
 
-                current_cables_conditions_from_card0 = CARD0.get_cables_path_condition_from_card0()
+                current_cables_conditions_from_card0 = Card0.get_cables_path_condition_from_card0()
 
                 cables_changes = {
-                    'new_cables': CARD0.check_if_cable_was_connected(past_cables_conditions,
+                    'new_cables': Card0.check_if_cable_was_connected(past_cables_conditions,
                                                                      current_cables_conditions_from_card0),
-                    'removed_cables': CARD0.check_if_cable_was_disconnected(past_cables_conditions,
+                    'removed_cables': Card0.check_if_cable_was_disconnected(past_cables_conditions,
                                                                             cabels_conditions_file_path)
                 }
 
