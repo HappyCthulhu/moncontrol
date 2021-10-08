@@ -6,7 +6,7 @@ from logging_settings import set_logger
 from monitors_manager import Monitors
 
 
-# TODO: создать bash-скрипт, который создает директорию конфигов, делает moncotrol executable, спрашивает, где лежит директория c проектом и добавляет в /bin
+# TODO: создать bash-скрипт, который создает директорию конфигов, спрашивает, где лежит директория c проектом и добавляет в /bin
 # XRANDR_MANAGER, MONITOR_MANAGER, CARD0_MANAGER, LAUNCH
 # CARD0_CONFIGS, MONITORS_LAYOUTS_CONFIGS, CONFIGS_MANAGER
 # стоит ли создавать отдельный класс работы с конфигами, который наследовался в отдельные классы конфигов CARD0_CONFIGS и MONITORS_LAYOUTS_CONFIGS

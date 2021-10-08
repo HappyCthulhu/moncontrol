@@ -1,7 +1,8 @@
 #!/bin/bash
+mkdir configs
 path=$(pwd)
-cd $path && poetry run python moncontrol.py $1
 
+sudo echo -e "#!/bin/bash\ncd $path/functional && poetry run python moncontrol.py" '$1' > /bin/moncontrol
 
-
-
+sudo chmod u+x /bin/moncontrol
+sudo chmod 777 /bin/moncontrol
