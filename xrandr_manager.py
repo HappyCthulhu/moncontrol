@@ -2,9 +2,11 @@ import re
 import subprocess
 
 
-class XRANDR:
-    @staticmethod
-    def get_monitors_data_from_xrandr():
+class XRANDR_MANAGER:
+    def __init__(self):
+        self.monitors_data = self.get_monitors_data()
+
+    def get_monitors_data(self):
         monitors = subprocess.check_output('xrandr').decode()
 
         iterator = re.finditer(r"^\S[\W\w]*?(?=^(\S|$))", monitors, re.MULTILINE)
@@ -45,15 +47,14 @@ class XRANDR:
         return monitor_dimensions[0] * monitor_dimensions[1]
 
     @staticmethod
-    def create_string_for_execute(monitors_data: list[str]):
+    def create_string_for_execute(xrandr_monitors_data, input_monitors_layout: list[str]):
         # TODO: XRANDR_MANAGER (приватная функция)
         execute_command = []
 
         # TODO: сюда еще дописать логгирование: в xrandr нет указанного вами монитора: monitor_name
-        xrandr_data = XRANDR.get_monitors_data_from_xrandr()
 
-        for id, cable_name in enumerate(monitors_data):
-            if len(monitors_data) == id + 1:
+        for id, cable_name in enumerate(input_monitors_layout):
+            if len(input_monitors_layout) == id + 1:
                 break
 
             """ 
@@ -65,7 +66,7 @@ class XRANDR:
             # TODO: первый аргумент в пользу данных из xrandr в формате словаря: можно будет спокойно получать информацию о мониторе по названию подключенного к нему кабеля. При использовании списка приходится юзать filter
 
             execute_command.append(
-                f'xrandr --output {cable_name} --pos {xrandr_data[cable_name]["resolutions"][0]} --left-of {monitors_data[id + 1]} --pos {xrandr_data[monitors_data[id + 1]]["resolutions"][0]} | ')
+                f'xrandr --output {cable_name} --pos {xrandr_monitors_data[cable_name]["resolutions"][0]} --left-of {input_monitors_layout[id + 1]} --pos {xrandr_monitors_data[input_monitors_layout[id + 1]]["resolutions"][0]} | ')
 
         execute_command = ' '.join(execute_command)
 
@@ -85,3 +86,17 @@ class XRANDR:
                 return saved_config
 
         return None
+
+    @staticmethod
+    def create_new_collections_of_mon_positions(new_mon_pos, previous_monitor_positions):
+        for id, monitors_names_from_settings in enumerate(previous_monitor_positions):
+
+            if monitors_names_from_settings == new_mon_pos:
+                previous_monitor_positions.insert(0, previous_monitor_positions.pop(id))
+                new_monitors_positions = previous_monitor_positions
+                return new_monitors_positions
+
+        previous_monitor_positions.insert(0, new_mon_pos)
+        new_monitors_positions = previous_monitor_positions
+        return new_monitors_positions
+

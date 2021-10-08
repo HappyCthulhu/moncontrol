@@ -7,10 +7,10 @@ from pathlib import Path
 from card0_manager import CARD0
 from logging_settings import set_logger
 from monitors_manager import MONITORS
-from xrandr_manager import XRANDR
+from xrandr_manager import XRANDR_MANAGER
 
 
-# XRANDR_MANAGER, MONITOR_MANAGER, CARD0_MANAGER
+# XRANDR_MANAGER, MONITOR_MANAGER, CARD0_MANAGER, LAUNCH
 # CARD0_CONFIGS, MONITORS_LAYOUTS_CONFIGS, CONFIGS_MANAGER
 # стоит ли создавать отдельный класс работы с конфигами, который наследовался в отдельные классы конфигов CARD0_CONFIGS и MONITORS_LAYOUTS_CONFIGS
 # TODO: в режиме "auto-monitoring-connectivity": конец json-файла выглядит так: "/sys/class/drm/card0/card0-DP-1":
@@ -43,12 +43,12 @@ def get_and_write_virtual_env():
 def monitoring_activity():
     while True:
         CARD0.check_cable_conditions_until_it_change(CABLES_CONDITIONS_FILE_PATH)
-        monitors_data_from_xrandr = XRANDR.get_monitors_data_from_xrandr()
+        xrandr = XRANDR_MANAGER()
 
         # TODO: при пустом файлу st_size возвращает 1, а не 0... wtf
         print(Path(MONITORS_LAYOUTS_FILE_PATH).stat().st_size)
 
-        if len(monitors_data_from_xrandr) == 1:
+        if len(xrandr.monitors_data) == 1:
             execute_command = 'xrandr --auto'
             logger.info(execute_command)
 
@@ -59,11 +59,11 @@ def monitoring_activity():
             with open(MONITORS_LAYOUTS_FILE_PATH, 'r') as file:
                 previously_saved_mons_pos = json.load(file)
 
-            location_of_monitors = XRANDR.get_needed_monitors_layout_config_automatically(monitors_data_from_xrandr,
-                                                                                          previously_saved_mons_pos)
+            location_of_monitors = XRANDR_MANAGER.get_needed_monitors_layout_config_automatically(xrandr.monitors_data,
+                                                                                                  previously_saved_mons_pos)
 
             if location_of_monitors:
-                execute_command = XRANDR.create_string_for_execute(location_of_monitors)
+                execute_command = xrandr.create_string_for_execute(xrandr.monitors_data, location_of_monitors)
                 logger.debug(f'Позиционируем мониторы согласно сохраненным ранее настройкам: {location_of_monitors}')
 
                 logger.info(execute_command)
@@ -71,12 +71,12 @@ def monitoring_activity():
             else:
                 logger.info(
                     'Config with previous monitor layouts doesnt contains current connected cables. Connecting monitors with sorting by monitors size. If you want to set monitors by yout self, use command: "moncotrol -s"')
-                monitors_sorted_by_size = MONITORS.connect_monitors_automatically(monitors_data_from_xrandr)
+                monitors_sorted_by_size = MONITORS.connect_monitors_automatically(xrandr.monitors_data)
 
                 with open(MONITORS_LAYOUTS_FILE_PATH, 'w') as file:
                     json.dump(monitors_sorted_by_size, file, indent=4)
 
-                execute_command = XRANDR.create_string_for_execute(monitors_sorted_by_size)
+                execute_command = xrandr.create_string_for_execute(xrandr.monitors_data, monitors_sorted_by_size)
 
                 logger.info(execute_command)
 
@@ -86,7 +86,10 @@ def monitoring_activity():
 
 
 def position_manually():
-    my_monitors_position = MONITORS.set_monitors_position_manually()
+    monitors = MONITORS()
+    xrandr = XRANDR_MANAGER()
+
+    my_monitors_position = monitors.set_monitors_position_manually()
 
     # TODO: сделать проверку на существование и пустоту файла
 
@@ -95,19 +98,19 @@ def position_manually():
         with open(MONITORS_LAYOUTS_FILE_PATH, 'w') as file:
             json.dump([my_monitors_position], file)
 
-        execute_command = XRANDR.create_string_for_execute(my_monitors_position)
+        execute_command = XRANDR_MANAGER.create_string_for_execute(xrandr.monitors_data, my_monitors_position)
 
     else:
         with open(MONITORS_LAYOUTS_FILE_PATH, 'r') as file:
             previously_saved_mons_pos = json.load(file)
 
-        new_collection_of_monitors_positions = MONITORS.create_new_collections_of_mon_positions(my_monitors_position,
-                                                                                                previously_saved_mons_pos)
+        new_collection_of_monitors_positions = xrandr.create_new_collections_of_mon_positions(my_monitors_position,
+                                                                                              previously_saved_mons_pos)
 
         with open(MONITORS_LAYOUTS_FILE_PATH, 'w') as file:
             json.dump(new_collection_of_monitors_positions, file, indent=4)
 
-        execute_command = XRANDR.create_string_for_execute(new_collection_of_monitors_positions[0])
+        execute_command = XRANDR_MANAGER.create_string_for_execute(xrandr.monitors_data, new_collection_of_monitors_positions[0])
 
     logger.info('Settings was saved successfully')
     logger.info(execute_command)
@@ -133,7 +136,7 @@ def choose_one_of_saved_positions_of_monitors():
         logger.info('You did not save any monitors layouts yet')
     logger.info('Next strings will show monitors_positions in format: {config_id: [cable_1, cable_2, etc]}\n')
 
-    saved_cable_position_with_id = XRANDR.create_layout_id_layout_name_dict(previously_saved_mons_pos)
+    saved_cable_position_with_id = XRANDR_MANAGER.create_layout_id_layout_name_dict(previously_saved_mons_pos)
 
     for id, monitors_names in saved_cable_position_with_id.items():
         print(f'\n{id}: {monitors_names}')
@@ -143,7 +146,8 @@ def choose_one_of_saved_positions_of_monitors():
     logger.info('Write number of config, that u need rn and press Enter button')
     input_id = int(input())
 
-    execute_command = XRANDR.create_string_for_execute(saved_cable_position_with_id[input_id])
+    xrandr = XRANDR_MANAGER()
+    execute_command = xrandr.create_string_for_execute(xrandr.monitors_data, saved_cable_position_with_id[input_id])
     logger.info(execute_command)
 
 
@@ -155,7 +159,7 @@ def show_saved_monitors_positions():
         with open(MONITORS_LAYOUTS_FILE_PATH, 'r') as file:
             saved_positions = json.load(file)
 
-        saved_positions_with_position_id = XRANDR.create_layout_id_layout_name_dict(saved_positions)
+        saved_positions_with_position_id = XRANDR_MANAGER.create_layout_id_layout_name_dict(saved_positions)
 
         logger.info(
             'Next strings will show monitors_positions in format: {monitors_position_id: [cabel_1, cabel_2, etc]}')
