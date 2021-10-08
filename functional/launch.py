@@ -5,7 +5,7 @@ from pathlib import Path
 from card0_manager import Card0
 from logging_settings import set_logger
 from monitors_manager import Monitors
-from xrandrmanager import XrandrManager
+from xrandr_manager import XrandrManager
 
 
 class Launch:

@@ -4,7 +4,7 @@ import time
 from collections import OrderedDict
 
 from logging_settings import set_logger
-from xrandrmanager import XrandrManager
+from xrandr_manager import XrandrManager
 
 
 class Monitors(XrandrManager):
