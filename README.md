@@ -28,10 +28,8 @@ optional arguments:
 - install direnv (its not obligatory, but helpfull)
 - clone this repo to your directory
 - go to this repos directory
-- ```poetry install```
 - make file "moncontrol" executable
-- copy file "moncontrol" to /bin directory
-- open /bin/moncontrol file, change ```path=$(pwd)``` to directory, that consist this moncontrol repo, like: ```path=$(/home/user/moncontrol)```
+- execute command: ```sudo ./setup```
 - check moncontrol with command: ```moncontrol --help```
 
 If u want moncontrol works permanently, u can add moncontrol -m to your systemctl
