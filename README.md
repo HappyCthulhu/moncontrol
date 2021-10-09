@@ -1,4 +1,4 @@
-## What this script can 
+## What this script can do:
 
 Commands:  
 usage: moncontrol.py [-h] [-m] [-s] [-c] [-p] [-d]
@@ -22,14 +22,29 @@ optional arguments:
 ## Dependencies:
 - xorg
 - xrandr
+- [poetry](https://python-poetry.org/docs/) (this is modern pip`s analog)
+- [direnv](https://direnv.net/) (its not obligatory, but helpfull)
 
 ## Setup:
-- install poetry (this is modern pip`s analog): https://python-poetry.org/docs/
-- install direnv (its not obligatory, but helpfull)
-- clone this repo to your directory
-- go to this repos directory
-- make file "moncontrol" executable
-- execute command: ```sudo ./setup```
-- check moncontrol with command: ```moncontrol --help```
+### Install dependencies:
+- install xorg and xrandr (but you probably already have them)
+- install poetry with:  
+```curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -```
+- install direnv
+
+### Install moncontrol:
+
+```sh
+# clone this repo
+git clone https://github.com/HappyCthulhu/moncontrol
+# go to moncontrol directory
+cd moncontrol
+# create virtual enviropment
+poetry install
+# launch script, that create moncontrol-bash script in /bin
+sudo ./setup
+# check moncontrol work
+moncontrol -h
+```
 
 If u want moncontrol works permanently, u can add moncontrol -m to your systemctl
